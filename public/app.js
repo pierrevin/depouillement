@@ -1,0 +1,211 @@
+const state = {
+  lists: [],
+  totalVotes: 0,
+  gap: 0,
+  leader: null,
+  history: []
+};
+
+const elements = {
+  status: document.getElementById("status"),
+  configForm: document.getElementById("config-form"),
+  name1: document.getElementById("name-1"),
+  name2: document.getElementById("name-2"),
+  lists: document.getElementById("lists"),
+  totalVotes: document.getElementById("total-votes"),
+  leader: document.getElementById("leader"),
+  gap: document.getElementById("gap"),
+  bars: document.getElementById("bars"),
+  history: document.getElementById("history"),
+  resetButton: document.getElementById("reset-button"),
+  undoButton: document.getElementById("undo-button")
+};
+
+function formatPercentage(value) {
+  return `${value.toFixed(1).replace(".", ",")} %`;
+}
+
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString("fr-FR", { hour12: false });
+}
+
+function historyLabel(entry) {
+  if (!entry) return "";
+  if (entry.type === "vote") {
+    const sign = entry.delta > 0 ? "+1" : "-1";
+    return `${formatDate(entry.at)} - ${entry.listName} ${sign}`;
+  }
+  if (entry.type === "reset") {
+    return `${formatDate(entry.at)} - Remise a zero`;
+  }
+  if (entry.type === "config") {
+    return `${formatDate(entry.at)} - Noms des listes modifies`;
+  }
+  return `${formatDate(entry.at)} - Action`;
+}
+
+function renderLists() {
+  elements.lists.innerHTML = state.lists
+    .map(
+      (list) => `
+      <article class="card">
+        <h3>${list.name}</h3>
+        <p class="votes">${list.votes}</p>
+        <p class="percent">${formatPercentage(list.percentage)}</p>
+        <div class="vote-actions">
+          <button class="ghost" data-action="vote" data-list-id="${list.id}" data-delta="-1" ${
+            list.votes === 0 ? "disabled" : ""
+          }>-1</button>
+          <button data-action="vote" data-list-id="${list.id}" data-delta="1">+1</button>
+        </div>
+      </article>
+    `
+    )
+    .join("");
+}
+
+function renderBars() {
+  const colors = ["#1b74d4", "#22a561"];
+  elements.bars.innerHTML = state.lists
+    .map(
+      (list, index) => `
+      <div>
+        <div class="bar-label">
+          <strong>${list.name}</strong>
+          <span>${list.votes} (${formatPercentage(list.percentage)})</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${list.percentage}%;background:${colors[index % colors.length]}"></div>
+        </div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+function renderHistory() {
+  if (!state.history.length) {
+    elements.history.innerHTML = "<li>Aucune action pour le moment.</li>";
+    return;
+  }
+  elements.history.innerHTML = state.history
+    .slice(0, 12)
+    .map((entry) => `<li>${historyLabel(entry)}</li>`)
+    .join("");
+}
+
+function render() {
+  renderLists();
+  renderBars();
+  renderHistory();
+  elements.totalVotes.textContent = String(state.totalVotes);
+  elements.gap.textContent = String(state.gap);
+  elements.leader.textContent = state.leader ? state.leader.name : "-";
+  elements.name1.value = state.lists[0]?.name || "";
+  elements.name2.value = state.lists[1]?.name || "";
+}
+
+function mergeState(nextState) {
+  state.lists = nextState.lists || [];
+  state.totalVotes = nextState.totalVotes || 0;
+  state.gap = nextState.gap || 0;
+  state.leader = nextState.leader || null;
+  state.history = nextState.history || [];
+  render();
+}
+
+async function callApi(endpoint, body = {}) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur API");
+  }
+  return payload;
+}
+
+async function loadInitialState() {
+  const response = await fetch("/api/state");
+  const payload = await response.json();
+  mergeState(payload);
+}
+
+function setupEvents() {
+  elements.configForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await callApi("/api/config", { names: [elements.name1.value, elements.name2.value] });
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.lists.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action='vote']");
+    if (!button) return;
+    const listId = button.dataset.listId;
+    const delta = Number(button.dataset.delta);
+    try {
+      await callApi("/api/vote", { listId, delta });
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.resetButton.addEventListener("click", async () => {
+    const confirmed = window.confirm("Confirmer la remise a zero de tous les compteurs ?");
+    if (!confirmed) return;
+    try {
+      await callApi("/api/reset");
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.undoButton.addEventListener("click", async () => {
+    try {
+      await callApi("/api/undo");
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+}
+
+function setupRealtime() {
+  const events = new EventSource("/api/events");
+  events.onopen = () => {
+    elements.status.textContent = "Connecte en direct";
+    elements.status.classList.remove("offline");
+    elements.status.classList.add("online");
+  };
+  events.onerror = () => {
+    elements.status.textContent = "Connexion en cours...";
+    elements.status.classList.remove("online");
+    elements.status.classList.add("offline");
+  };
+  events.onmessage = (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      mergeState(payload);
+    } catch {
+      // Ignore malformed stream payloads.
+    }
+  };
+}
+
+async function boot() {
+  setupEvents();
+  await loadInitialState();
+  setupRealtime();
+}
+
+boot().catch((error) => {
+  elements.status.textContent = `Erreur: ${error.message}`;
+  elements.status.classList.remove("online");
+  elements.status.classList.add("offline");
+});

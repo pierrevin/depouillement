@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Depouillement en direct</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="top">
+        <h1>Depouillement en direct</h1>
+        <p class="subtitle">Comptage simple, instantane et partage en temps reel</p>
+        <span id="status" class="status offline">Hors ligne</span>
+      </header>
+
+      <section class="panel">
+        <h2>Configuration des 2 listes</h2>
+        <form id="config-form" class="form-inline">
+          <label>
+            Liste 1
+            <input id="name-1" required maxlength="40" />
+          </label>
+          <label>
+            Liste 2
+            <input id="name-2" required maxlength="40" />
+          </label>
+          <button type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Compteurs</h2>
+        <div id="lists" class="lists"></div>
+      </section>
+
+      <section class="panel stats">
+        <h2>Statistiques en direct</h2>
+        <div class="stats-grid">
+          <article>
+            <h3>Total des voix</h3>
+            <p id="total-votes" class="big">0</p>
+          </article>
+          <article>
+            <h3>Tete</h3>
+            <p id="leader" class="big">-</p>
+          </article>
+          <article>
+            <h3>Ecart</h3>
+            <p id="gap" class="big">0</p>
+          </article>
+        </div>
+        <div id="bars" class="bars"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Actions globales</h2>
+        <div class="actions">
+          <button id="undo-button" type="button">Annuler la derniere action</button>
+          <button id="reset-button" type="button" class="danger">Remettre a zero</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Historique recent</h2>
+        <ul id="history" class="history"></ul>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>

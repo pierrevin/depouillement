@@ -1,6 +1,9 @@
 const state = {
   lists: [],
-  totalVotes: 0,
+  totalBallots: 0,
+  expressedVotes: 0,
+  blankVotes: 0,
+  nullVotes: 0,
   gap: 0,
   leader: null,
   history: []
@@ -12,7 +15,11 @@ const elements = {
   name1: document.getElementById("name-1"),
   name2: document.getElementById("name-2"),
   lists: document.getElementById("lists"),
-  totalVotes: document.getElementById("total-votes"),
+  specialVotes: document.getElementById("special-votes"),
+  totalBallots: document.getElementById("total-ballots"),
+  expressedVotes: document.getElementById("expressed-votes"),
+  blankVotes: document.getElementById("blank-votes"),
+  nullVotes: document.getElementById("null-votes"),
   leader: document.getElementById("leader"),
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
@@ -35,6 +42,10 @@ function historyLabel(entry) {
   if (entry.type === "vote") {
     const sign = entry.delta > 0 ? "+1" : "-1";
     return `${formatDate(entry.at)} - ${entry.listName} ${sign}`;
+  }
+  if (entry.type === "special_vote") {
+    const sign = entry.delta > 0 ? "+1" : "-1";
+    return `${formatDate(entry.at)} - ${entry.label} ${sign}`;
   }
   if (entry.type === "reset") {
     return `${formatDate(entry.at)} - Remise a zero`;
@@ -84,6 +95,30 @@ function renderBars() {
     .join("");
 }
 
+function renderSpecialVotes() {
+  const special = [
+    { kind: "blank", label: "Blancs", votes: state.blankVotes, className: "blanc" },
+    { kind: "null", label: "Nuls", votes: state.nullVotes, className: "nul" }
+  ];
+
+  elements.specialVotes.innerHTML = special
+    .map(
+      (item) => `
+      <article class="card">
+        <h3>${item.label}</h3>
+        <p class="votes">${item.votes}</p>
+        <div class="vote-actions">
+          <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-1" ${
+            item.votes === 0 ? "disabled" : ""
+          }>-1</button>
+          <button class="${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">+1</button>
+        </div>
+      </article>
+    `
+    )
+    .join("");
+}
+
 function renderHistory() {
   if (!state.history.length) {
     elements.history.innerHTML = "<li>Aucune action pour le moment.</li>";
@@ -97,9 +132,13 @@ function renderHistory() {
 
 function render() {
   renderLists();
+  renderSpecialVotes();
   renderBars();
   renderHistory();
-  elements.totalVotes.textContent = String(state.totalVotes);
+  elements.totalBallots.textContent = String(state.totalBallots);
+  elements.expressedVotes.textContent = String(state.expressedVotes);
+  elements.blankVotes.textContent = String(state.blankVotes);
+  elements.nullVotes.textContent = String(state.nullVotes);
   elements.gap.textContent = String(state.gap);
   elements.leader.textContent = state.leader ? state.leader.name : "-";
   elements.name1.value = state.lists[0]?.name || "";
@@ -108,7 +147,10 @@ function render() {
 
 function mergeState(nextState) {
   state.lists = nextState.lists || [];
-  state.totalVotes = nextState.totalVotes || 0;
+  state.totalBallots = nextState.totalBallots || nextState.totalVotes || 0;
+  state.expressedVotes = nextState.expressedVotes || 0;
+  state.blankVotes = nextState.blankVotes || 0;
+  state.nullVotes = nextState.nullVotes || 0;
   state.gap = nextState.gap || 0;
   state.leader = nextState.leader || null;
   state.history = nextState.history || [];
@@ -152,6 +194,18 @@ function setupEvents() {
     const delta = Number(button.dataset.delta);
     try {
       await callApi("/api/vote", { listId, delta });
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.specialVotes.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action='special-vote']");
+    if (!button) return;
+    const kind = button.dataset.kind;
+    const delta = Number(button.dataset.delta);
+    try {
+      await callApi("/api/special-vote", { kind, delta });
     } catch (error) {
       alert(error.message);
     }

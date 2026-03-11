@@ -6,7 +6,8 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 
 - 2 listes configurables (noms modifiables a chaud)
 - Compteurs +1 / -1 pour chaque liste
-- Statistiques instantanees: total, pourcentage, tete, ecart
+- Compteurs +1 / -1 pour les bulletins blancs et nuls
+- Statistiques instantanees: total bulletins, exprimes, blancs, nuls, pourcentage, tete, ecart
 - Historique recent des actions
 - Annulation de la derniere action
 - Remise a zero globale
@@ -30,6 +31,7 @@ http://localhost:3000
 - `GET /api/state` - etat courant
 - `GET /api/events` - flux temps reel (Server-Sent Events)
 - `POST /api/vote` - ajoute/retire une voix (`{ "listId": "liste-1", "delta": 1 }`)
+- `POST /api/special-vote` - ajoute/retire un blanc ou nul (`{ "kind": "blank", "delta": 1 }`)
 - `POST /api/config` - renomme les listes (`{ "names": ["Liste A", "Liste B"] }`)
 - `POST /api/reset` - remet les compteurs a zero
 - `POST /api/undo` - annule la derniere action

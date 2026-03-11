@@ -26,6 +26,8 @@ function defaultState() {
       { id: "liste-1", name: "Liste 1", votes: 0 },
       { id: "liste-2", name: "Liste 2", votes: 0 }
     ],
+    blankVotes: 0,
+    nullVotes: 0,
     history: [],
     updatedAt: new Date().toISOString()
   };
@@ -51,6 +53,10 @@ function normalizeState(rawState) {
 
   return {
     lists,
+    blankVotes:
+      Number.isInteger(rawState.blankVotes) && rawState.blankVotes >= 0 ? rawState.blankVotes : 0,
+    nullVotes:
+      Number.isInteger(rawState.nullVotes) && rawState.nullVotes >= 0 ? rawState.nullVotes : 0,
     history: Array.isArray(rawState.history) ? rawState.history.slice(-100) : [],
     updatedAt: typeof rawState.updatedAt === "string" ? rawState.updatedAt : new Date().toISOString()
   };
@@ -77,7 +83,9 @@ function saveState() {
 }
 
 function computePublicState() {
-  const totalVotes = state.lists.reduce((sum, list) => sum + list.votes, 0);
+  const expressedVotes = state.lists.reduce((sum, list) => sum + list.votes, 0);
+  const nonExpressedVotes = state.blankVotes + state.nullVotes;
+  const totalBallots = expressedVotes + nonExpressedVotes;
   const sorted = [...state.lists].sort((a, b) => b.votes - a.votes);
   const leader = sorted[0];
   const runnerUp = sorted[1];
@@ -86,9 +94,15 @@ function computePublicState() {
   return {
     lists: state.lists.map((list) => ({
       ...list,
-      percentage: totalVotes === 0 ? 0 : Number(((list.votes / totalVotes) * 100).toFixed(1))
+      percentage:
+        expressedVotes === 0 ? 0 : Number(((list.votes / expressedVotes) * 100).toFixed(1))
     })),
-    totalVotes,
+    totalVotes: totalBallots,
+    totalBallots,
+    expressedVotes,
+    nonExpressedVotes,
+    blankVotes: state.blankVotes,
+    nullVotes: state.nullVotes,
     leader: leader || null,
     gap,
     history: [...state.history].slice(-50).reverse(),
@@ -160,6 +174,17 @@ function safeName(input, fallback) {
   return cleaned ? cleaned.slice(0, 40) : fallback;
 }
 
+function snapshotBeforeChange() {
+  return {
+    previousVotes: state.lists.map((list) => list.votes),
+    previousNames: state.lists.map((list) => list.name),
+    previousSpecial: {
+      blankVotes: state.blankVotes,
+      nullVotes: state.nullVotes
+    }
+  };
+}
+
 async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/state") {
     sendJson(res, 200, computePublicState());
@@ -187,14 +212,13 @@ async function handleApi(req, res, url) {
         return true;
       }
 
-      const previousNames = state.lists.map((list) => list.name);
+      const previous = snapshotBeforeChange();
       state.lists[0].name = safeName(names[0], state.lists[0].name);
       state.lists[1].name = safeName(names[1], state.lists[1].name);
       updateTimestamp();
       pushHistory({
         type: "config",
-        previousNames,
-        previousVotes: state.lists.map((list) => list.votes),
+        ...previous,
         names: state.lists.map((list) => list.name)
       });
       saveState();
@@ -225,7 +249,7 @@ async function handleApi(req, res, url) {
         return true;
       }
 
-      const previousVotes = state.lists.map((item) => item.votes);
+      const previous = snapshotBeforeChange();
       list.votes += delta;
       updateTimestamp();
       pushHistory({
@@ -233,8 +257,56 @@ async function handleApi(req, res, url) {
         listId: list.id,
         listName: list.name,
         delta,
-        previousVotes,
-        previousNames: state.lists.map((item) => item.name)
+        ...previous
+      });
+      saveState();
+      broadcast();
+      sendJson(res, 200, computePublicState());
+      return true;
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+      return true;
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/special-vote") {
+    try {
+      const body = await parseJsonBody(req);
+      const delta = Number(body.delta);
+      if (![1, -1].includes(delta)) {
+        sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
+        return true;
+      }
+
+      const kind = body.kind;
+      if (!["blank", "null"].includes(kind)) {
+        sendJson(res, 400, { error: "kind doit valoir blank ou null." });
+        return true;
+      }
+
+      if (kind === "blank" && delta < 0 && state.blankVotes === 0) {
+        sendJson(res, 400, { error: "Le compteur blancs ne peut pas descendre sous 0." });
+        return true;
+      }
+      if (kind === "null" && delta < 0 && state.nullVotes === 0) {
+        sendJson(res, 400, { error: "Le compteur nuls ne peut pas descendre sous 0." });
+        return true;
+      }
+
+      const previous = snapshotBeforeChange();
+      if (kind === "blank") {
+        state.blankVotes += delta;
+      } else {
+        state.nullVotes += delta;
+      }
+
+      updateTimestamp();
+      pushHistory({
+        type: "special_vote",
+        kind,
+        label: kind === "blank" ? "Blancs" : "Nuls",
+        delta,
+        ...previous
       });
       saveState();
       broadcast();
@@ -247,13 +319,14 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/reset") {
-    const previousVotes = state.lists.map((list) => list.votes);
+    const previous = snapshotBeforeChange();
     state.lists = state.lists.map((list) => ({ ...list, votes: 0 }));
+    state.blankVotes = 0;
+    state.nullVotes = 0;
     updateTimestamp();
     pushHistory({
       type: "reset",
-      previousVotes,
-      previousNames: state.lists.map((list) => list.name)
+      ...previous
     });
     saveState();
     broadcast();
@@ -279,6 +352,13 @@ async function handleApi(req, res, url) {
       state.lists.forEach((list, index) => {
         list.name = safeName(last.previousNames[index], list.name);
       });
+    }
+
+    if (last.previousSpecial && typeof last.previousSpecial === "object") {
+      const blankVotes = last.previousSpecial.blankVotes;
+      const nullVotes = last.previousSpecial.nullVotes;
+      state.blankVotes = Number.isInteger(blankVotes) && blankVotes >= 0 ? blankVotes : 0;
+      state.nullVotes = Number.isInteger(nullVotes) && nullVotes >= 0 ? nullVotes : 0;
     }
 
     updateTimestamp();

@@ -114,6 +114,12 @@ button.danger {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.special-votes {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .card {
   border: 1px solid #dce3ea;
   border-radius: 12px;
@@ -144,6 +150,14 @@ button.danger {
 
 .vote-actions button {
   flex: 1;
+}
+
+.vote-actions button.blanc {
+  background: #0f8a7b;
+}
+
+.vote-actions button.nul {
+  background: #7d3cb5;
 }
 
 .stats-grid {

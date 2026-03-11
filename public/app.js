@@ -6,7 +6,8 @@ const state = {
   nullVotes: 0,
   gap: 0,
   leader: null,
-  history: []
+  history: [],
+  updatedAt: null
 };
 
 const elements = {
@@ -16,6 +17,7 @@ const elements = {
   name2: document.getElementById("name-2"),
   lists: document.getElementById("lists"),
   specialVotes: document.getElementById("special-votes"),
+  lastUpdate: document.getElementById("last-update"),
   totalBallots: document.getElementById("total-ballots"),
   expressedVotes: document.getElementById("expressed-votes"),
   blankVotes: document.getElementById("blank-votes"),
@@ -35,6 +37,27 @@ function formatPercentage(value) {
 function formatDate(isoString) {
   const date = new Date(isoString);
   return date.toLocaleTimeString("fr-FR", { hour12: false });
+}
+
+function formatDateTime(isoString) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  return date.toLocaleString("fr-FR", { hour12: false });
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+    return map[char];
+  });
 }
 
 function historyLabel(entry) {
@@ -61,7 +84,7 @@ function renderLists() {
     .map(
       (list) => `
       <article class="card">
-        <h3>${list.name}</h3>
+        <h3>${escapeHtml(list.name)}</h3>
         <p class="votes">${list.votes}</p>
         <p class="percent">${formatPercentage(list.percentage)}</p>
         <div class="vote-actions">
@@ -83,7 +106,7 @@ function renderBars() {
       (list, index) => `
       <div>
         <div class="bar-label">
-          <strong>${list.name}</strong>
+          <strong>${escapeHtml(list.name)}</strong>
           <span>${list.votes} (${formatPercentage(list.percentage)})</span>
         </div>
         <div class="bar-track">
@@ -105,7 +128,7 @@ function renderSpecialVotes() {
     .map(
       (item) => `
       <article class="card">
-        <h3>${item.label}</h3>
+        <h3>${escapeHtml(item.label)}</h3>
         <p class="votes">${item.votes}</p>
         <div class="vote-actions">
           <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-1" ${
@@ -126,7 +149,7 @@ function renderHistory() {
   }
   elements.history.innerHTML = state.history
     .slice(0, 12)
-    .map((entry) => `<li>${historyLabel(entry)}</li>`)
+    .map((entry) => `<li>${escapeHtml(historyLabel(entry))}</li>`)
     .join("");
 }
 
@@ -141,8 +164,10 @@ function render() {
   elements.nullVotes.textContent = String(state.nullVotes);
   elements.gap.textContent = String(state.gap);
   elements.leader.textContent = state.leader ? state.leader.name : "-";
+  elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   elements.name1.value = state.lists[0]?.name || "";
   elements.name2.value = state.lists[1]?.name || "";
+  elements.undoButton.disabled = state.history.length === 0;
 }
 
 function mergeState(nextState) {
@@ -154,6 +179,7 @@ function mergeState(nextState) {
   state.gap = nextState.gap || 0;
   state.leader = nextState.leader || null;
   state.history = nextState.history || [];
+  state.updatedAt = nextState.updatedAt || null;
   render();
 }
 

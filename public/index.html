@@ -8,14 +8,22 @@
   </head>
   <body>
     <main class="container">
-      <header class="top">
-        <h1>Depouillement en direct</h1>
-        <p class="subtitle">Comptage simple, instantane et partage en temps reel</p>
-        <span id="status" class="status offline">Hors ligne</span>
+      <header class="hero panel">
+        <div class="hero-top">
+          <p class="eyebrow">Scrutin en direct</p>
+          <span id="status" class="status offline">Hors ligne</span>
+        </div>
+        <h1>Depouillement moderne et ultra rapide</h1>
+        <p class="subtitle">Comptage simple, instantane et partage en temps reel entre tous les appareils.</p>
+        <div class="hero-meta">
+          <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
+          <p class="meta-line">UX pensee pour mobile et bureau.</p>
+        </div>
       </header>
 
       <section class="panel">
         <h2>Configuration des 2 listes</h2>
+        <p class="section-subtitle">Renomme rapidement les listes avant ou pendant le depouillement.</p>
         <form id="config-form" class="form-inline">
           <label>
             Liste 1
@@ -31,38 +39,41 @@
 
       <section class="panel">
         <h2>Compteurs</h2>
+        <p class="section-subtitle">Ajoute ou retire une voix sur chaque liste en un clic.</p>
         <div id="lists" class="lists"></div>
       </section>
 
       <section class="panel">
         <h2>Blancs et nuls</h2>
+        <p class="section-subtitle">Comptage dedie des bulletins non exprimes.</p>
         <div id="special-votes" class="special-votes"></div>
       </section>
 
       <section class="panel stats">
         <h2>Statistiques en direct</h2>
+        <p class="section-subtitle">Les valeurs se mettent a jour en temps reel pour tous les observateurs.</p>
         <div class="stats-grid">
-          <article>
+          <article class="stat-card accent-blue">
             <h3>Total bulletins</h3>
             <p id="total-ballots" class="big">0</p>
           </article>
-          <article>
+          <article class="stat-card accent-green">
             <h3>Exprimes</h3>
             <p id="expressed-votes" class="big">0</p>
           </article>
-          <article>
+          <article class="stat-card accent-teal">
             <h3>Blancs</h3>
             <p id="blank-votes" class="big">0</p>
           </article>
-          <article>
+          <article class="stat-card accent-purple">
             <h3>Nuls</h3>
             <p id="null-votes" class="big">0</p>
           </article>
-          <article>
+          <article class="stat-card accent-orange">
             <h3>Tete</h3>
             <p id="leader" class="big">-</p>
           </article>
-          <article>
+          <article class="stat-card accent-pink">
             <h3>Ecart</h3>
             <p id="gap" class="big">0</p>
           </article>

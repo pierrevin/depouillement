@@ -36,6 +36,7 @@ const elements = {
   status: document.getElementById("status"),
   adminMenuButton: document.getElementById("admin-menu-button"),
   adminDrawer: document.getElementById("admin-drawer"),
+  adminBackdrop: document.getElementById("admin-backdrop"),
   adminCloseButton: document.getElementById("admin-close-button"),
   adminOnlySections: document.querySelectorAll(".admin-only"),
   accessForm: document.getElementById("access-form"),
@@ -155,6 +156,10 @@ function canWrite() {
 function setAdminDrawerOpen(open) {
   isAdminDrawerOpen = open;
   elements.adminDrawer.hidden = !open;
+  if (elements.adminBackdrop) {
+    elements.adminBackdrop.hidden = !open;
+  }
+  document.body.classList.toggle("admin-drawer-open", open);
 }
 
 function setAdminView(active) {
@@ -365,7 +370,6 @@ function renderLists() {
           <span class="quick-count">${list.votes}</span>
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
-        ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
     })
@@ -409,7 +413,6 @@ function renderSpecialVotes() {
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>
         </span>
-        ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
     })
@@ -1064,6 +1067,18 @@ function setupEvents() {
 
   elements.adminCloseButton.addEventListener("click", () => {
     setAdminDrawerOpen(false);
+  });
+
+  if (elements.adminBackdrop) {
+    elements.adminBackdrop.addEventListener("click", () => {
+      setAdminDrawerOpen(false);
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isAdminDrawerOpen) {
+      setAdminDrawerOpen(false);
+    }
   });
 
   elements.accessForm.addEventListener("submit", async (event) => {

@@ -40,6 +40,10 @@ body {
     linear-gradient(180deg, var(--bg-a) 0%, var(--bg-b) 100%);
 }
 
+body.admin-drawer-open {
+  overflow: hidden;
+}
+
 .container {
   width: min(1100px, 94vw);
   margin: 1.25rem auto 2rem;
@@ -283,9 +287,24 @@ body {
 }
 
 .admin-drawer {
+  position: fixed;
+  left: 50%;
+  bottom: max(0.8rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(1100px, 94vw);
+  max-height: min(78vh, 680px);
+  overflow: auto;
+  z-index: 45;
   border: 1px solid #c8d9e0;
   border-top-color: #b7cdd7;
   background: #f6fafb;
+}
+
+.admin-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: rgba(0, 36, 54, 0.32);
 }
 
 .config-headline {
@@ -468,16 +487,6 @@ button.danger {
     0 12px 22px -16px rgba(0, 52, 74, 0.8);
 }
 
-.last-action-tag {
-  width: fit-content;
-  border-radius: 999px;
-  padding: 0.13rem 0.42rem;
-  font-size: 0.69rem;
-  font-weight: 700;
-  background: rgba(0, 74, 109, 0.24);
-  color: inherit;
-}
-
 .quick-button.soft.is-last-action {
   box-shadow:
     0 0 0 2px rgba(74, 158, 176, 0.22),
@@ -499,11 +508,6 @@ button.danger {
 
 .quick-button.candidate-2 .quick-percent {
   color: rgba(79, 50, 0, 0.86);
-}
-
-.quick-button.candidate-2 .last-action-tag {
-  background: rgba(79, 50, 0, 0.14);
-  color: #4f3200;
 }
 
 .quick-button.blanc {

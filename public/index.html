@@ -104,8 +104,9 @@
       </section>
 
       <section class="panel seats-panel">
-        <h2>Calcul des elus (19 sieges)</h2>
+        <h2 id="seats-title">Calcul des elus (19 sieges)</h2>
         <p id="seats-summary" class="section-subtitle">Les sieges seront calcules automatiquement avec la prime majoritaire.</p>
+        <p id="seats-distribution-info" class="mini">Sieges a repartir: -</p>
         <p id="seats-quotient-info" class="mini">QE: -</p>
         <div id="seats-table"></div>
       </section>
@@ -116,9 +117,10 @@
           <button id="simulation-toggle" type="button" class="ghost compact-action">Activer</button>
         </div>
         <div id="simulation-content" class="simulation-content">
-          <p class="section-subtitle">
+          <p id="simulation-subtitle" class="section-subtitle">
             Simule une repartition sur 19 sieges avec des voix exprimees fictives.
           </p>
+          <p id="simulation-distribution-info" class="mini">Sieges a repartir en simulation: -</p>
           <p id="simulation-quotient-info" class="mini">QE simulation: -</p>
           <form id="simulation-form" class="simulation-form">
             <label>

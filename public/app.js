@@ -46,12 +46,16 @@ const elements = {
   leader: document.getElementById("leader"),
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
+  seatsTitle: document.getElementById("seats-title"),
   seatsSummary: document.getElementById("seats-summary"),
+  seatsDistributionInfo: document.getElementById("seats-distribution-info"),
   seatsQuotientInfo: document.getElementById("seats-quotient-info"),
   seatsTable: document.getElementById("seats-table"),
   simulationPanel: document.getElementById("simulation-panel"),
   simulationToggle: document.getElementById("simulation-toggle"),
   simulationContent: document.getElementById("simulation-content"),
+  simulationSubtitle: document.getElementById("simulation-subtitle"),
+  simulationDistributionInfo: document.getElementById("simulation-distribution-info"),
   simulationForm: document.getElementById("simulation-form"),
   simulationLabel1: document.getElementById("simulation-label-1"),
   simulationLabel2: document.getElementById("simulation-label-2"),
@@ -325,11 +329,15 @@ function renderSpecialVotes() {
 function renderSeatAllocation() {
   const allocation = state.seatAllocation;
   if (!allocation) {
+    elements.seatsTitle.textContent = `Calcul des elus (${DEFAULT_TOTAL_SEATS} sieges)`;
     elements.seatsSummary.textContent = "Calcul indisponible pour le moment.";
+    elements.seatsDistributionInfo.textContent = "Sieges a repartir: -";
     elements.seatsQuotientInfo.textContent = "QE: -";
     elements.seatsTable.innerHTML = "";
     return;
   }
+  elements.seatsTitle.textContent = `Calcul des elus (${allocation.totalSeats} sieges)`;
+  elements.seatsDistributionInfo.textContent = `Sieges a repartir (proportionnelle): ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
 
   const quotientLabel = `QE: ${state.expressedVotes} / ${allocation.proportionalSeats} = ${formatDecimal(
     allocation.quotientElectoral,
@@ -463,7 +471,10 @@ function updateSimulationPercentages(simulatedLists) {
 }
 
 function renderSimulationResult() {
+  const seatBase = Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS;
+  elements.simulationSubtitle.textContent = `Simule une repartition sur ${seatBase} sieges avec des voix exprimees fictives.`;
   if (!isSimulationEnabled) {
+    elements.simulationDistributionInfo.textContent = "Sieges a repartir en simulation: -";
     elements.simulationQuotientInfo.textContent = "QE simulation: -";
     elements.simulationResult.innerHTML = "";
     return;
@@ -473,8 +484,9 @@ function renderSimulationResult() {
   updateSimulationPercentages(simulatedLists);
   const allocation = computeSeatAllocationDetailed(
     simulatedLists,
-    Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS
+    seatBase
   );
+  elements.simulationDistributionInfo.textContent = `Sieges a repartir en simulation: ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
   elements.simulationQuotientInfo.textContent = `QE simulation: ${
     allocation.expressedVotes
   } / ${allocation.proportionalSeats} = ${formatDecimal(allocation.quotientElectoral, 2)}`;

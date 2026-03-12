@@ -443,6 +443,31 @@ button.danger {
   border-top-color: var(--cyan);
 }
 
+.quick-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.undo-inline {
+  min-height: 38px;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid #c1d6df;
+  background: rgba(255, 255, 255, 0.94);
+  color: #1c536c;
+  box-shadow: 0 8px 14px -14px rgba(0, 48, 70, 0.65);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.undo-inline.holding {
+  background: #dcefe9;
+  border-color: #97c8b7;
+  color: #0f5c46;
+}
+
 .quick-block {
   display: grid;
   gap: 0.55rem;
@@ -868,30 +893,6 @@ button.danger {
   margin-bottom: 0.55rem;
 }
 
-.undo-fab {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: max(0.72rem, env(safe-area-inset-bottom));
-  z-index: 35;
-  min-height: 42px;
-  min-width: min(280px, calc(100vw - 1.4rem));
-  padding: 0.5rem 0.82rem;
-  border-radius: 999px;
-  border: 1px solid #c1d6df;
-  background: rgba(255, 255, 255, 0.92);
-  color: #1c536c;
-  box-shadow: 0 9px 16px -14px rgba(0, 48, 70, 0.65);
-  font-size: 0.86rem;
-  justify-content: center;
-}
-
-.undo-fab.holding {
-  background: #dcefe9;
-  border-color: #97c8b7;
-  color: #0f5c46;
-}
-
 .manual-panel {
   padding-top: 0.8rem;
   border-top-color: #c0d8e1;
@@ -1056,12 +1057,10 @@ button.compact-reset.armed {
     font-size: 0.92rem;
   }
 
-  .undo-fab {
-    bottom: max(0.5rem, env(safe-area-inset-bottom));
-    min-height: 40px;
-    min-width: min(300px, calc(100vw - 1rem));
-    padding: 0.44rem 0.64rem;
-    font-size: 0.81rem;
+  .undo-inline {
+    min-height: 36px;
+    padding: 0.34rem 0.6rem;
+    font-size: 0.78rem;
   }
 
   .reset-hint {

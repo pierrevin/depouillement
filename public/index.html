@@ -83,7 +83,10 @@
       </section>
 
       <section class="panel quick-panel">
-        <h2>Nombre de voix</h2>
+        <div class="quick-panel-head">
+          <h2>Nombre de voix</h2>
+          <button id="undo-button" type="button" class="undo-inline admin-only" hidden>Annuler (maintenir)</button>
+        </div>
         <div class="quick-block">
           <p class="quick-label">Candidats</p>
           <div id="lists" class="quick-row"></div>
@@ -224,8 +227,6 @@
       <footer class="footer-admin">
         <button id="admin-menu-button" type="button" class="hero-menu-button footer-admin-button">Menu admin</button>
       </footer>
-
-      <button id="undo-button" type="button" class="undo-fab admin-only" hidden>Annuler (maintenir)</button>
     </main>
     <div id="admin-backdrop" class="admin-backdrop" hidden></div>
 

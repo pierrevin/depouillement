@@ -1138,6 +1138,7 @@ function setupEvents() {
     try {
       const payload = await callApi("/api/set-totals", { listVotes, blankVotes, nullVotes });
       mergeState(payload);
+      setManualCollapsed(true);
       hapticFeedback();
     } catch (error) {
       alert(error.message);

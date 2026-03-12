@@ -487,6 +487,16 @@ button.danger {
     0 12px 22px -16px rgba(0, 52, 74, 0.8);
 }
 
+.last-action-tag {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.13rem 0.42rem;
+  font-size: 0.69rem;
+  font-weight: 700;
+  background: rgba(0, 74, 109, 0.24);
+  color: inherit;
+}
+
 .quick-button.soft.is-last-action {
   box-shadow:
     0 0 0 2px rgba(74, 158, 176, 0.22),
@@ -508,6 +518,11 @@ button.danger {
 
 .quick-button.candidate-2 .quick-percent {
   color: rgba(79, 50, 0, 0.86);
+}
+
+.quick-button.candidate-2 .last-action-tag {
+  background: rgba(79, 50, 0, 0.14);
+  color: #4f3200;
 }
 
 .quick-button.blanc {
@@ -855,17 +870,26 @@ button.danger {
 
 .undo-fab {
   position: fixed;
-  right: max(0.8rem, env(safe-area-inset-right));
-  bottom: max(0.8rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(0.72rem, env(safe-area-inset-bottom));
   z-index: 35;
-  min-height: 38px;
-  padding: 0.42rem 0.7rem;
+  min-height: 42px;
+  min-width: min(280px, calc(100vw - 1.4rem));
+  padding: 0.5rem 0.82rem;
   border-radius: 999px;
   border: 1px solid #c1d6df;
   background: rgba(255, 255, 255, 0.92);
   color: #1c536c;
   box-shadow: 0 9px 16px -14px rgba(0, 48, 70, 0.65);
-  font-size: 0.83rem;
+  font-size: 0.86rem;
+  justify-content: center;
+}
+
+.undo-fab.holding {
+  background: #dcefe9;
+  border-color: #97c8b7;
+  color: #0f5c46;
 }
 
 .manual-panel {
@@ -1033,11 +1057,11 @@ button.compact-reset.armed {
   }
 
   .undo-fab {
-    bottom: max(0.55rem, env(safe-area-inset-bottom));
-    right: max(0.55rem, env(safe-area-inset-right));
-    min-height: 34px;
-    padding: 0.36rem 0.62rem;
-    font-size: 0.79rem;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    min-height: 40px;
+    min-width: min(300px, calc(100vw - 1rem));
+    padding: 0.44rem 0.64rem;
+    font-size: 0.81rem;
   }
 
   .reset-hint {

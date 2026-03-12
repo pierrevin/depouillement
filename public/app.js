@@ -5,6 +5,7 @@ const state = {
   registeredVoters: 0,
   participationPercent: null,
   writeProtectionEnabled: false,
+  authMode: "none",
   isWriteUnlocked: false,
   isAdminView: false,
   blankVotes: 0,
@@ -37,6 +38,11 @@ const elements = {
   adminCloseButton: document.getElementById("admin-close-button"),
   adminOnlySections: document.querySelectorAll(".admin-only"),
   accessForm: document.getElementById("access-form"),
+  accessUsernameLabel: document.getElementById("access-username-label"),
+  accessUsername: document.getElementById("access-username"),
+  accessPasswordLabel: document.getElementById("access-password-label"),
+  accessPassword: document.getElementById("access-password"),
+  accessPinLabel: document.getElementById("access-pin-label"),
   accessPin: document.getElementById("access-pin"),
   accessHelp: document.getElementById("access-help"),
   accessModeBadge: document.getElementById("access-mode-badge"),
@@ -675,14 +681,28 @@ function renderAccessControls() {
     section.hidden = !state.isAdminView;
   });
 
-  if (!state.writeProtectionEnabled) {
+  const isAccountMode = state.authMode === "account";
+  const isPinMode = state.authMode === "pin";
+  if (elements.accessUsernameLabel) {
+    elements.accessUsernameLabel.hidden = !isAccountMode;
+  }
+  if (elements.accessPasswordLabel) {
+    elements.accessPasswordLabel.hidden = !isAccountMode;
+  }
+  if (elements.accessPinLabel) {
+    elements.accessPinLabel.hidden = !isPinMode;
+  }
+
+  if (state.authMode === "none" || !state.writeProtectionEnabled) {
     elements.accessModeBadge.textContent = state.isAdminView ? "Admin local" : "Lecture seule";
     elements.accessModeBadge.className = state.isAdminView
       ? "access-badge open"
       : "access-badge readonly";
     elements.accessHelp.textContent =
-      "Aucun PIN serveur configure (WRITE_PIN absent). Le code n'est pas verifie, utilise simplement le mode admin.";
-    elements.accessPin.disabled = false;
+      "Aucune protection serveur active. Active simplement le mode admin sur cet appareil.";
+    elements.accessPin.disabled = true;
+    if (elements.accessUsername) elements.accessUsername.disabled = true;
+    if (elements.accessPassword) elements.accessPassword.disabled = true;
     elements.unlockButton.textContent = "Entrer en mode admin";
     elements.unlockButton.disabled = state.isAdminView;
     elements.lockButton.disabled = !state.isAdminView;
@@ -693,8 +713,10 @@ function renderAccessControls() {
     return;
   }
 
-  elements.accessPin.disabled = false;
-  elements.unlockButton.textContent = "Se connecter admin";
+  elements.accessPin.disabled = !isPinMode;
+  if (elements.accessUsername) elements.accessUsername.disabled = !isAccountMode;
+  if (elements.accessPassword) elements.accessPassword.disabled = !isAccountMode;
+  elements.unlockButton.textContent = isAccountMode ? "Connexion compte" : "Se connecter admin";
   elements.unlockButton.disabled = state.isAdminView;
   elements.lockButton.disabled = !state.isAdminView;
   if (state.isWriteUnlocked && state.isAdminView) {
@@ -703,16 +725,18 @@ function renderAccessControls() {
     elements.accessHelp.textContent =
       "Mode admin actif sur cet appareil. La session reste ouverte apres rechargement.";
     if (elements.liveModeBadge) {
-      elements.liveModeBadge.textContent = "Mode admin (PIN)";
+      elements.liveModeBadge.textContent = isAccountMode ? "Mode admin (compte)" : "Mode admin (PIN)";
       elements.liveModeBadge.className = "mode-chip mode-admin";
     }
   } else {
     elements.accessModeBadge.textContent = "Lecture seule";
     elements.accessModeBadge.className = "access-badge readonly";
     elements.accessHelp.textContent =
-      "Entre le PIN pour activer le mode admin sur cet appareil.";
+      isAccountMode
+        ? "Saisis identifiant et mot de passe admin pour activer la saisie."
+        : "Entre le PIN pour activer le mode admin sur cet appareil.";
     if (elements.liveModeBadge) {
-      elements.liveModeBadge.textContent = "Mode lecteur (PIN actif)";
+      elements.liveModeBadge.textContent = isAccountMode ? "Mode lecteur (compte actif)" : "Mode lecteur (PIN actif)";
       elements.liveModeBadge.className = "mode-chip mode-readonly";
     }
   }
@@ -958,6 +982,19 @@ async function verifyWritePin(pin) {
   return payload;
 }
 
+async function loginAdmin(username, password) {
+  const response = await fetch("/api/access/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur de connexion admin");
+  }
+  return payload;
+}
+
 async function logoutWriteAccess() {
   const response = await fetch("/api/access/logout", {
     method: "POST"
@@ -973,10 +1010,12 @@ async function initializeWriteAccess() {
   const response = await fetch("/api/access");
   const payload = await response.json();
   state.writeProtectionEnabled = Boolean(payload.writeProtectionEnabled);
+  state.authMode = payload.authMode || (state.writeProtectionEnabled ? "pin" : "none");
   state.isWriteUnlocked = Boolean(payload.writeAuthorized);
   if (!state.writeProtectionEnabled) {
     currentWritePin = "";
-    return;
+  } else if (state.authMode !== "pin") {
+    currentWritePin = "";
   }
   state.isAdminView = state.isWriteUnlocked;
 }
@@ -1002,10 +1041,36 @@ function setupEvents() {
 
   elements.accessForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.writeProtectionEnabled) {
+    if (state.authMode === "none" || !state.writeProtectionEnabled) {
       setAdminView(true);
       setAdminDrawerOpen(false);
       render();
+      return;
+    }
+
+    if (state.authMode === "account") {
+      const username = elements.accessUsername?.value.trim() || "";
+      const password = elements.accessPassword?.value || "";
+      if (!username || !password) {
+        alert("Entre l'identifiant et le mot de passe admin.");
+        return;
+      }
+      try {
+        const result = await loginAdmin(username, password);
+        currentWritePin = "";
+        state.isWriteUnlocked = Boolean(result.writeAuthorized);
+        setAdminView(state.isWriteUnlocked);
+        if (elements.accessUsername) {
+          elements.accessUsername.value = "";
+        }
+        if (elements.accessPassword) {
+          elements.accessPassword.value = "";
+        }
+        setAdminDrawerOpen(false);
+        render();
+      } catch (error) {
+        alert(error.message);
+      }
       return;
     }
 
@@ -1042,6 +1107,12 @@ function setupEvents() {
     }
     setAdminView(false);
     elements.accessPin.value = "";
+    if (elements.accessUsername) {
+      elements.accessUsername.value = "";
+    }
+    if (elements.accessPassword) {
+      elements.accessPassword.value = "";
+    }
     setAdminDrawerOpen(false);
     render();
   });

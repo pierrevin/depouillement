@@ -33,7 +33,15 @@
           Active le mode admin pour acceder a la saisie et aux outils avances.
         </p>
         <form id="access-form" class="access-form">
-          <label class="access-pin-label">
+          <label id="access-username-label" class="access-pin-label" hidden>
+            Identifiant admin
+            <input id="access-username" autocomplete="username" />
+          </label>
+          <label id="access-password-label" class="access-pin-label" hidden>
+            Mot de passe
+            <input id="access-password" type="password" autocomplete="current-password" />
+          </label>
+          <label id="access-pin-label" class="access-pin-label">
             PIN de saisie
             <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" />
           </label>

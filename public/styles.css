@@ -214,7 +214,7 @@ body {
 .access-form {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: minmax(140px, 1fr) auto auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   align-items: end;
 }
 

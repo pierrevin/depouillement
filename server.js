@@ -9,11 +9,19 @@ const PORT = Number(process.env.PORT || 3000);
 const parsedTotalSeats = Number.parseInt(process.env.TOTAL_SEATS || "19", 10);
 const TOTAL_SEATS = Number.isInteger(parsedTotalSeats) && parsedTotalSeats > 0 ? parsedTotalSeats : 19;
 const WRITE_PIN = String(process.env.WRITE_PIN || "").trim();
-const WRITE_PROTECTION_ENABLED = WRITE_PIN.length > 0;
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "").trim();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "").trim();
+const ACCOUNT_AUTH_ENABLED = ADMIN_USERNAME.length > 0 && ADMIN_PASSWORD.length > 0;
+const PIN_AUTH_ENABLED = !ACCOUNT_AUTH_ENABLED && WRITE_PIN.length > 0;
+const AUTH_MODE = ACCOUNT_AUTH_ENABLED ? "account" : PIN_AUTH_ENABLED ? "pin" : "none";
+const WRITE_PROTECTION_ENABLED = AUTH_MODE !== "none";
 const parsedSessionTtl = Number.parseInt(process.env.ADMIN_SESSION_TTL_SEC || "43200", 10);
 const ADMIN_SESSION_TTL_SEC =
   Number.isInteger(parsedSessionTtl) && parsedSessionTtl > 0 ? parsedSessionTtl : 43200;
 const ADMIN_SESSION_COOKIE = "dep_admin_session";
+const ADMIN_SESSION_SECRET =
+  String(process.env.ADMIN_SESSION_SECRET || "").trim() ||
+  crypto.createHash("sha256").update(`${WRITE_PIN}|${ADMIN_USERNAME}|${ADMIN_PASSWORD}`).digest("hex");
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 
@@ -28,7 +36,6 @@ const MIME_TYPES = {
 };
 
 const clients = new Set();
-const adminSessions = new Map();
 
 function defaultState() {
   return {
@@ -297,6 +304,15 @@ function parseCookies(req) {
   }, {});
 }
 
+function constantTimeEqual(a, b) {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  if (left.length !== right.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(left, right);
+}
+
 function isHttpsRequest(req) {
   const protoHeader = req.headers["x-forwarded-proto"];
   if (typeof protoHeader === "string" && protoHeader.trim()) {
@@ -305,42 +321,53 @@ function isHttpsRequest(req) {
   return Boolean(req.socket && req.socket.encrypted);
 }
 
-function cleanupExpiredAdminSessions(now = Date.now()) {
-  for (const [token, expiresAt] of adminSessions.entries()) {
-    if (!Number.isInteger(expiresAt) || expiresAt <= now) {
-      adminSessions.delete(token);
-    }
-  }
-}
-
 function getSessionTokenFromRequest(req) {
   const cookies = parseCookies(req);
   const token = cookies[ADMIN_SESSION_COOKIE];
   return typeof token === "string" ? token : "";
 }
 
-function isAdminSessionValid(token) {
-  if (!token) {
-    return false;
-  }
-  cleanupExpiredAdminSessions();
-  const expiresAt = adminSessions.get(token);
-  if (!Number.isInteger(expiresAt)) {
-    return false;
-  }
-  if (expiresAt <= Date.now()) {
-    adminSessions.delete(token);
-    return false;
-  }
-  return true;
+function signSessionPayload(encodedPayload) {
+  return crypto.createHmac("sha256", ADMIN_SESSION_SECRET).update(encodedPayload).digest("base64url");
 }
 
-function createAdminSession() {
-  cleanupExpiredAdminSessions();
-  const token = crypto.randomBytes(24).toString("hex");
-  const expiresAt = Date.now() + ADMIN_SESSION_TTL_SEC * 1000;
-  adminSessions.set(token, expiresAt);
-  return token;
+function createAdminSessionToken({ mode, user = "" }) {
+  const payload = {
+    mode,
+    user: user || "",
+    exp: Date.now() + ADMIN_SESSION_TTL_SEC * 1000
+  };
+  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const signature = signSessionPayload(encoded);
+  return `${encoded}.${signature}`;
+}
+
+function verifyAdminSessionToken(token) {
+  if (!token) {
+    return null;
+  }
+  const parts = token.split(".");
+  if (parts.length !== 2) {
+    return null;
+  }
+  const [encodedPayload, providedSignature] = parts;
+  const expectedSignature = signSessionPayload(encodedPayload);
+  if (!constantTimeEqual(providedSignature, expectedSignature)) {
+    return null;
+  }
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  if (!Number.isInteger(payload.exp) || payload.exp <= Date.now()) {
+    return null;
+  }
+  return payload;
 }
 
 function buildSessionCookie(req, token) {
@@ -369,16 +396,25 @@ function isWriteAuthorized(req) {
   if (!WRITE_PROTECTION_ENABLED) {
     return true;
   }
-  const provided = req.headers["x-write-pin"];
-  if (Array.isArray(provided)) {
-    if (provided.includes(WRITE_PIN)) {
-      return true;
-    }
-  } else if (typeof provided === "string" && provided === WRITE_PIN) {
-    return true;
-  }
   const sessionToken = getSessionTokenFromRequest(req);
-  return isAdminSessionValid(sessionToken);
+  const session = verifyAdminSessionToken(sessionToken);
+  if (session) {
+    if (AUTH_MODE === "account") {
+      return session.mode === "account" && session.user === ADMIN_USERNAME;
+    }
+    if (AUTH_MODE === "pin") {
+      return session.mode === "pin";
+    }
+  }
+
+  if (AUTH_MODE === "pin") {
+    const provided = req.headers["x-write-pin"];
+    if (Array.isArray(provided)) {
+      return provided.some((value) => constantTimeEqual(value, WRITE_PIN));
+    }
+    return typeof provided === "string" && constantTimeEqual(provided, WRITE_PIN);
+  }
+  return false;
 }
 
 function ensureWriteAccess(req, res) {
@@ -386,7 +422,10 @@ function ensureWriteAccess(req, res) {
     return true;
   }
   sendJson(res, 403, {
-    error: "Mode lecture seule: PIN requis pour modifier le depouillement."
+    error:
+      AUTH_MODE === "account"
+        ? "Mode lecture seule: compte admin requis pour modifier le depouillement."
+        : "Mode lecture seule: PIN requis pour modifier le depouillement."
   });
   return false;
 }
@@ -466,40 +505,72 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/access") {
     sendJson(res, 200, {
       writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-      writeAuthorized: isWriteAuthorized(req)
+      writeAuthorized: isWriteAuthorized(req),
+      authMode: AUTH_MODE
     });
     return true;
   }
 
   if (req.method === "POST" && url.pathname === "/api/access/verify") {
+    if (AUTH_MODE !== "pin") {
+      sendJson(res, 400, { error: "La verification PIN n'est pas active sur ce serveur." });
+      return true;
+    }
     try {
       const body = await parseJsonBody(req);
       const providedPin = typeof body.pin === "string" ? body.pin.trim() : "";
-      const ok = !WRITE_PROTECTION_ENABLED || providedPin === WRITE_PIN;
+      const ok = constantTimeEqual(providedPin, WRITE_PIN);
       if (!ok) {
         sendJson(res, 200, {
           ok,
           writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-          writeAuthorized: isWriteAuthorized(req)
+          writeAuthorized: isWriteAuthorized(req),
+          authMode: AUTH_MODE
         });
         return true;
       }
-      if (!WRITE_PROTECTION_ENABLED) {
-        sendJson(res, 200, {
-          ok,
-          writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-          writeAuthorized: true
-        });
-        return true;
-      }
-      const token = createAdminSession();
+      const token = createAdminSessionToken({ mode: "pin" });
       sendJson(
         res,
         200,
         {
           ok,
           writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-          writeAuthorized: true
+          writeAuthorized: true,
+          authMode: AUTH_MODE
+        },
+        { "Set-Cookie": buildSessionCookie(req, token) }
+      );
+      return true;
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+      return true;
+    }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/access/login") {
+    if (AUTH_MODE !== "account") {
+      sendJson(res, 400, { error: "La connexion compte admin n'est pas active sur ce serveur." });
+      return true;
+    }
+    try {
+      const body = await parseJsonBody(req);
+      const username = typeof body.username === "string" ? body.username.trim() : "";
+      const password = typeof body.password === "string" ? body.password : "";
+      const ok = constantTimeEqual(username, ADMIN_USERNAME) && constantTimeEqual(password, ADMIN_PASSWORD);
+      if (!ok) {
+        sendJson(res, 401, { error: "Identifiant ou mot de passe incorrect." });
+        return true;
+      }
+      const token = createAdminSessionToken({ mode: "account", user: ADMIN_USERNAME });
+      sendJson(
+        res,
+        200,
+        {
+          ok: true,
+          writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+          writeAuthorized: true,
+          authMode: AUTH_MODE
         },
         { "Set-Cookie": buildSessionCookie(req, token) }
       );
@@ -511,17 +582,14 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/access/logout") {
-    const token = getSessionTokenFromRequest(req);
-    if (token) {
-      adminSessions.delete(token);
-    }
     sendJson(
       res,
       200,
       {
         ok: true,
         writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-        writeAuthorized: false
+        writeAuthorized: false,
+        authMode: AUTH_MODE
       },
       { "Set-Cookie": buildSessionClearCookie(req) }
     );

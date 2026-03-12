@@ -364,7 +364,6 @@ function renderLists() {
           <span class="quick-count">${list.votes}</span>
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
-        <span class="quick-cta">+1 voix</span>
         ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
       </button>
     `;
@@ -410,7 +409,6 @@ function renderSpecialVotes() {
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>
         </span>
-        <span class="quick-cta">+1 bulletin</span>
         ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
       </button>
     `;

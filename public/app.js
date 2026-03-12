@@ -23,9 +23,11 @@ let isAdminDrawerOpen = false;
 let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
+const MANUAL_COLLAPSE_KEY = "depouillement-manual-collapsed";
 const DEFAULT_TOTAL_SEATS = 19;
 let currentWritePin = "";
 let isSimulationEnabled = false;
+let isManualCollapsed = true;
 const simulationVotesByList = {};
 
 const elements = {
@@ -84,6 +86,9 @@ const elements = {
   simulationQuotientInfo: document.getElementById("simulation-quotient-info"),
   simulationResult: document.getElementById("simulation-result"),
   history: document.getElementById("history"),
+  manualEdit: document.getElementById("manual-edit"),
+  manualToggle: document.getElementById("manual-toggle"),
+  manualContent: document.getElementById("manual-content"),
   manualForm: document.getElementById("manual-form"),
   manualLabel1: document.getElementById("manual-label-1"),
   manualLabel2: document.getElementById("manual-label-2"),
@@ -739,6 +744,29 @@ function loadConfigCollapsePreference() {
   }
 }
 
+function setManualCollapsed(collapsed) {
+  isManualCollapsed = collapsed;
+  if (!elements.manualEdit || !elements.manualToggle) return;
+  elements.manualEdit.classList.toggle("collapsed", collapsed);
+  elements.manualToggle.textContent = collapsed ? "Afficher" : "Replier";
+  try {
+    localStorage.setItem(MANUAL_COLLAPSE_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
+}
+
+function loadManualCollapsePreference() {
+  try {
+    const value = localStorage.getItem(MANUAL_COLLAPSE_KEY);
+    if (value === "1") return true;
+    if (value === "0") return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 function setResetHint(message = "") {
   elements.resetHint.textContent = message;
   elements.resetHint.classList.toggle("visible", Boolean(message));
@@ -995,6 +1023,12 @@ function setupEvents() {
     renderSimulationResult();
   });
 
+  if (elements.manualToggle) {
+    elements.manualToggle.addEventListener("click", () => {
+      setManualCollapsed(!isManualCollapsed);
+    });
+  }
+
   elements.simulationForm.addEventListener("submit", (event) => {
     event.preventDefault();
     renderSimulationResult();
@@ -1136,6 +1170,7 @@ function setupRealtime() {
 async function boot() {
   setConfigCollapsed(loadConfigCollapsePreference());
   setSimulationEnabled(loadSimulationPreference());
+  setManualCollapsed(loadManualCollapsePreference());
   setAdminDrawerOpen(false);
   await initializeWriteAccess();
   setupEvents();

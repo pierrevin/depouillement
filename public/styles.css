@@ -681,9 +681,24 @@ button.danger {
   background: #fcfdff;
 }
 
+.manual-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
 .manual-edit h3 {
-  margin: 0 0 0.45rem;
+  margin: 0;
   font-size: 0.92rem;
+}
+
+.manual-content {
+  margin-top: 0.55rem;
+}
+
+.manual-edit.collapsed .manual-content {
+  display: none;
 }
 
 .manual-form {

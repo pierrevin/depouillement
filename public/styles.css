@@ -108,7 +108,7 @@ body {
 
 .hero-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 0.8rem;
   position: relative;
@@ -152,6 +152,24 @@ body {
 .hero-menu-button.active {
   background: rgba(101, 174, 153, 0.26);
   border-color: rgba(198, 244, 229, 0.8);
+}
+
+.footer-admin {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.25rem;
+}
+
+.footer-admin-button {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--brand-dark);
+  border-color: #bad5e0;
+}
+
+.footer-admin-button.active {
+  background: #dcefe9;
+  color: #0f5c46;
+  border-color: #9ccfbe;
 }
 
 .eyebrow {

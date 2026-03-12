@@ -728,7 +728,7 @@ function renderAccessControls() {
     elements.unlockButton.disabled = state.isAdminView;
     elements.lockButton.disabled = !state.isAdminView;
     if (elements.liveModeBadge) {
-      elements.liveModeBadge.textContent = state.isAdminView ? "Mode admin local" : "Mode lecteur";
+      elements.liveModeBadge.textContent = state.isAdminView ? "Mode admin" : "Mode lecteur";
       elements.liveModeBadge.className = state.isAdminView ? "mode-chip mode-admin" : "mode-chip mode-readonly";
     }
     return;
@@ -746,7 +746,7 @@ function renderAccessControls() {
     elements.accessHelp.textContent =
       "Mode admin actif sur cet appareil. La session reste ouverte après rechargement.";
     if (elements.liveModeBadge) {
-      elements.liveModeBadge.textContent = isAccountMode ? "Mode admin (compte)" : "Mode admin (PIN)";
+      elements.liveModeBadge.textContent = "Mode admin";
       elements.liveModeBadge.className = "mode-chip mode-admin";
     }
   } else {
@@ -757,7 +757,7 @@ function renderAccessControls() {
         ? "Saisis identifiant et mot de passe admin pour activer la saisie."
         : "Entre le PIN pour activer le mode admin sur cet appareil.";
     if (elements.liveModeBadge) {
-      elements.liveModeBadge.textContent = isAccountMode ? "Mode lecteur (compte actif)" : "Mode lecteur (PIN actif)";
+      elements.liveModeBadge.textContent = "Mode lecteur";
       elements.liveModeBadge.className = "mode-chip mode-readonly";
     }
   }

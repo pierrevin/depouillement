@@ -86,7 +86,20 @@
       <section class="panel stats">
         <h2>Statistiques en direct</h2>
         <p class="section-subtitle">Les valeurs se mettent a jour en temps reel pour tous les observateurs.</p>
+        <div id="bars" class="bars"></div>
         <div class="stats-grid">
+          <article id="leader-card" class="stat-card stat-winner winner-none">
+            <h3>Tete</h3>
+            <p id="leader" class="big">-</p>
+          </article>
+          <article id="winner-seats-card" class="stat-card stat-winner winner-none">
+            <h3>Nombre d'elus</h3>
+            <p id="winner-seats" class="big">-</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Ecart</h3>
+            <p id="gap" class="big">0</p>
+          </article>
           <article class="stat-card stat-neutral">
             <h3>Inscrits</h3>
             <p id="registered-voters-display" class="big">0</p>
@@ -112,20 +125,7 @@
             <h3>Nuls</h3>
             <p id="null-votes" class="big">0</p>
           </article>
-          <article id="leader-card" class="stat-card stat-winner winner-none">
-            <h3>Tete</h3>
-            <p id="leader" class="big">-</p>
-          </article>
-          <article id="winner-seats-card" class="stat-card stat-winner winner-none">
-            <h3>Nombre d'elus</h3>
-            <p id="winner-seats" class="big">-</p>
-          </article>
-          <article class="stat-card stat-neutral">
-            <h3>Ecart</h3>
-            <p id="gap" class="big">0</p>
-          </article>
         </div>
-        <div id="bars" class="bars"></div>
       </section>
 
       <section class="panel seats-panel">

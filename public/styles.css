@@ -130,10 +130,11 @@ body.admin-drawer-open {
   height: 72px;
   width: auto;
   max-width: 38vw;
-  border-radius: 0;
-  background: transparent;
-  border: 0;
-  padding: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(190, 212, 222, 0.75);
+  box-shadow: 0 8px 14px -12px rgba(0, 48, 70, 0.6);
+  padding: 6px 8px;
   object-fit: contain;
   object-position: left center;
 }
@@ -1018,6 +1019,8 @@ button.compact-reset.armed {
     height: 58px;
     width: auto;
     max-width: 46vw;
+    border-radius: 12px;
+    padding: 5px 7px;
   }
 
   .subtitle,

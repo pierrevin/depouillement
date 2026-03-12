@@ -207,7 +207,8 @@ function setupEvents() {
   elements.configForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      await callApi("/api/config", { names: [elements.name1.value, elements.name2.value] });
+      const payload = await callApi("/api/config", { names: [elements.name1.value, elements.name2.value] });
+      mergeState(payload);
     } catch (error) {
       alert(error.message);
     }
@@ -219,7 +220,8 @@ function setupEvents() {
     const listId = button.dataset.listId;
     const delta = Number(button.dataset.delta);
     try {
-      await callApi("/api/vote", { listId, delta });
+      const payload = await callApi("/api/vote", { listId, delta });
+      mergeState(payload);
     } catch (error) {
       alert(error.message);
     }
@@ -231,7 +233,8 @@ function setupEvents() {
     const kind = button.dataset.kind;
     const delta = Number(button.dataset.delta);
     try {
-      await callApi("/api/special-vote", { kind, delta });
+      const payload = await callApi("/api/special-vote", { kind, delta });
+      mergeState(payload);
     } catch (error) {
       alert(error.message);
     }
@@ -241,7 +244,8 @@ function setupEvents() {
     const confirmed = window.confirm("Confirmer la remise a zero de tous les compteurs ?");
     if (!confirmed) return;
     try {
-      await callApi("/api/reset");
+      const payload = await callApi("/api/reset");
+      mergeState(payload);
     } catch (error) {
       alert(error.message);
     }
@@ -249,7 +253,8 @@ function setupEvents() {
 
   elements.undoButton.addEventListener("click", async () => {
     try {
-      await callApi("/api/undo");
+      const payload = await callApi("/api/undo");
+      mergeState(payload);
     } catch (error) {
       alert(error.message);
     }

@@ -6,6 +6,8 @@ const state = {
   nullVotes: 0,
   gap: 0,
   leader: null,
+  hasTieForLead: false,
+  seatAllocation: null,
   history: [],
   updatedAt: null
 };
@@ -32,6 +34,8 @@ const elements = {
   leader: document.getElementById("leader"),
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
+  seatsSummary: document.getElementById("seats-summary"),
+  seatsTable: document.getElementById("seats-table"),
   history: document.getElementById("history"),
   resetHint: document.getElementById("reset-hint"),
   resetButton: document.getElementById("reset-button"),
@@ -144,6 +148,68 @@ function renderSpecialVotes() {
     .join("");
 }
 
+function renderSeatAllocation() {
+  const allocation = state.seatAllocation;
+  if (!allocation) {
+    elements.seatsSummary.textContent = "Calcul indisponible pour le moment.";
+    elements.seatsTable.innerHTML = "";
+    return;
+  }
+
+  if (allocation.status === "no_expressed_votes") {
+    elements.seatsSummary.textContent =
+      "Ajoute des suffrages exprimes pour calculer la repartition des 21 sieges.";
+    elements.seatsTable.innerHTML = '<p class="seats-note">Aucun siege ne peut etre calcule sans suffrage exprime.</p>';
+    return;
+  }
+
+  if (allocation.status === "tie_for_lead") {
+    elements.seatsSummary.textContent =
+      "Egalite en tete: il faut departager la liste en tete pour attribuer la prime majoritaire.";
+    elements.seatsTable.innerHTML = '<p class="seats-note">Le calcul des elus reste en attente d\'une tete de liste unique.</p>';
+    return;
+  }
+
+  const sortedRows = [...allocation.rows].sort((a, b) => {
+    if (b.totalSeats !== a.totalSeats) return b.totalSeats - a.totalSeats;
+    if (b.votes !== a.votes) return b.votes - a.votes;
+    return a.listName.localeCompare(b.listName);
+  });
+
+  elements.seatsSummary.textContent = `Prime majoritaire: ${allocation.primeSeats} sieges pour ${allocation.leaderName}. Quotient electoral: ${allocation.quotientElectoral}.`;
+
+  elements.seatsTable.innerHTML = `
+    <div class="table-wrap">
+      <table class="seats-table">
+        <thead>
+          <tr>
+            <th>Liste</th>
+            <th>Voix</th>
+            <th>Proportionnelle</th>
+            <th>Prime</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sortedRows
+            .map(
+              (row) => `
+              <tr class="${row.listId === allocation.leaderId ? "leader-row" : ""}">
+                <td>${escapeHtml(row.listName)}</td>
+                <td>${row.votes}</td>
+                <td>${row.proportionalSeats}</td>
+                <td>${row.primeBonus}</td>
+                <td><strong>${row.totalSeats}</strong></td>
+              </tr>
+            `
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 function setConfigCollapsed(collapsed) {
   isConfigCollapsed = collapsed;
   elements.configPanel.classList.toggle("collapsed", collapsed);
@@ -205,6 +271,7 @@ function render() {
   renderLists();
   renderSpecialVotes();
   renderBars();
+  renderSeatAllocation();
   renderHistory();
   elements.totalBallots.textContent = String(state.totalBallots);
   elements.expressedVotes.textContent = String(state.expressedVotes);
@@ -213,7 +280,7 @@ function render() {
   elements.gap.textContent = String(state.gap);
   let leaderLabel = "-";
   if (state.expressedVotes > 0) {
-    leaderLabel = state.gap === 0 ? "Egalite" : state.leader?.name || "-";
+    leaderLabel = state.hasTieForLead ? "Egalite" : state.leader?.name || "-";
   }
   elements.leader.textContent = leaderLabel;
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
@@ -237,6 +304,8 @@ function mergeState(nextState) {
   state.nullVotes = nextState.nullVotes || 0;
   state.gap = nextState.gap || 0;
   state.leader = nextState.leader || null;
+  state.hasTieForLead = Boolean(nextState.hasTieForLead);
+  state.seatAllocation = nextState.seatAllocation || null;
   state.history = nextState.history || [];
   state.updatedAt = nextState.updatedAt || null;
   render();

@@ -82,6 +82,138 @@ function saveState() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), "utf8");
 }
 
+function computeSeatAllocation({ lists, expressedVotes, leader, hasTieForLead }) {
+  const totalSeats = 21;
+  const primeSeats = Math.ceil(totalSeats / 2);
+  const proportionalSeats = totalSeats - primeSeats;
+  const thresholdPercent = 5;
+  const thresholdVotesRaw = expressedVotes * (thresholdPercent / 100);
+  const thresholdVotes = Number(thresholdVotesRaw.toFixed(2));
+
+  const baseRows = lists.map((list) => ({
+    listId: list.id,
+    listName: list.name,
+    votes: list.votes,
+    proportionalSeats: 0,
+    primeBonus: 0,
+    totalSeats: 0,
+    eligible: expressedVotes > 0 && list.votes >= thresholdVotesRaw
+  }));
+
+  if (expressedVotes === 0) {
+    return {
+      status: "no_expressed_votes",
+      totalSeats,
+      primeSeats,
+      proportionalSeats,
+      thresholdPercent,
+      thresholdVotes,
+      quotientElectoral: 0,
+      eligibleListIds: [],
+      remainingAfterQuotient: proportionalSeats,
+      rounds: [],
+      rows: baseRows,
+      leaderId: null,
+      leaderName: null
+    };
+  }
+
+  if (!leader || hasTieForLead) {
+    return {
+      status: "tie_for_lead",
+      totalSeats,
+      primeSeats,
+      proportionalSeats,
+      thresholdPercent,
+      thresholdVotes,
+      quotientElectoral: Number((expressedVotes / Math.max(proportionalSeats, 1)).toFixed(4)),
+      eligibleListIds: baseRows.filter((row) => row.eligible).map((row) => row.listId),
+      remainingAfterQuotient: proportionalSeats,
+      rounds: [],
+      rows: baseRows,
+      leaderId: null,
+      leaderName: null
+    };
+  }
+
+  const eligibleLists = lists.filter((list) => list.votes >= thresholdVotesRaw);
+  const proportionalByListId = Object.fromEntries(lists.map((list) => [list.id, 0]));
+  const quotientElectoral = proportionalSeats > 0 ? expressedVotes / proportionalSeats : 0;
+
+  if (quotientElectoral > 0) {
+    for (const list of eligibleLists) {
+      proportionalByListId[list.id] = Math.floor(list.votes / quotientElectoral);
+    }
+  }
+
+  let distributedSeats = eligibleLists.reduce(
+    (sum, list) => sum + (proportionalByListId[list.id] || 0),
+    0
+  );
+  let remainingAfterQuotient = Math.max(0, proportionalSeats - distributedSeats);
+  const seatsToAllocateByAverage = remainingAfterQuotient;
+  const rounds = [];
+
+  while (remainingAfterQuotient > 0 && eligibleLists.length > 0) {
+    const ranked = [...eligibleLists]
+      .map((list) => ({
+        ...list,
+        currentSeats: proportionalByListId[list.id] || 0,
+        average: list.votes / ((proportionalByListId[list.id] || 0) + 1)
+      }))
+      .sort((a, b) => {
+        if (b.average !== a.average) return b.average - a.average;
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return a.id.localeCompare(b.id);
+      });
+
+    const winner = ranked[0];
+    const previousSeats = proportionalByListId[winner.id] || 0;
+    proportionalByListId[winner.id] = previousSeats + 1;
+    rounds.push({
+      round: rounds.length + 1,
+      listId: winner.id,
+      listName: winner.name,
+      average: Number(winner.average.toFixed(4)),
+      seatsBefore: previousSeats,
+      seatsAfter: previousSeats + 1
+    });
+    remainingAfterQuotient -= 1;
+  }
+
+  const rows = lists.map((list) => {
+    const proportional = proportionalByListId[list.id] || 0;
+    const primeBonus = list.id === leader.id ? primeSeats : 0;
+    return {
+      listId: list.id,
+      listName: list.name,
+      votes: list.votes,
+      proportionalSeats: proportional,
+      primeBonus,
+      totalSeats: proportional + primeBonus,
+      eligible: list.votes >= thresholdVotesRaw
+    };
+  });
+
+  return {
+    status: "ok",
+    totalSeats,
+    primeSeats,
+    proportionalSeats,
+    thresholdPercent,
+    thresholdVotes,
+    quotientElectoral: Number(quotientElectoral.toFixed(4)),
+    eligibleListIds: eligibleLists.map((list) => list.id),
+    remainingAfterQuotient: seatsToAllocateByAverage,
+    seatsAllocatedByAverage: rounds.length,
+    seatsStillUnallocated: remainingAfterQuotient,
+    rounds,
+    rows,
+    leaderId: leader.id,
+    leaderName: leader.name
+  };
+}
+
 function computePublicState() {
   const expressedVotes = state.lists.reduce((sum, list) => sum + list.votes, 0);
   const nonExpressedVotes = state.blankVotes + state.nullVotes;
@@ -90,8 +222,11 @@ function computePublicState() {
   const potentialLeader = sorted[0];
   const runnerUp = sorted[1];
   const gap = potentialLeader ? potentialLeader.votes - (runnerUp ? runnerUp.votes : 0) : 0;
-  const hasTieForLead = Boolean(runnerUp && potentialLeader && potentialLeader.votes === runnerUp.votes);
+  const hasTieForLead = Boolean(
+    expressedVotes > 0 && runnerUp && potentialLeader && potentialLeader.votes === runnerUp.votes
+  );
   const leader = expressedVotes > 0 && !hasTieForLead ? potentialLeader : null;
+  const seatAllocation = computeSeatAllocation({ lists: state.lists, expressedVotes, leader, hasTieForLead });
 
   return {
     lists: state.lists.map((list) => ({
@@ -106,7 +241,9 @@ function computePublicState() {
     blankVotes: state.blankVotes,
     nullVotes: state.nullVotes,
     leader: leader || null,
+    hasTieForLead,
     gap,
+    seatAllocation,
     history: [...state.history].slice(-50).reverse(),
     updatedAt: state.updatedAt
   };

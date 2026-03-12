@@ -137,6 +137,10 @@ body {
   display: none;
 }
 
+.config-panel.collapsed {
+  padding-bottom: 0.75rem;
+}
+
 .compact-action {
   min-height: 36px;
   padding: 0.4rem 0.65rem;
@@ -452,6 +456,44 @@ button.danger {
   margin-top: 0.95rem;
   display: grid;
   gap: 0.65rem;
+}
+
+.seats-panel {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.seats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.seats-table th,
+.seats-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem 0.35rem;
+  text-align: left;
+}
+
+.seats-table th {
+  color: #5a6c81;
+  font-weight: 700;
+}
+
+.seats-table .leader-row td {
+  background: #eef5ff;
+}
+
+.seats-note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #5f6f82;
+  padding: 0.55rem 0.2rem;
 }
 
 .bar-label {

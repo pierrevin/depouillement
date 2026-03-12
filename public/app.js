@@ -47,6 +47,7 @@ const elements = {
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
   seatsSummary: document.getElementById("seats-summary"),
+  seatsQuotientInfo: document.getElementById("seats-quotient-info"),
   seatsTable: document.getElementById("seats-table"),
   simulationPanel: document.getElementById("simulation-panel"),
   simulationToggle: document.getElementById("simulation-toggle"),
@@ -58,6 +59,7 @@ const elements = {
   simulationVotes2: document.getElementById("simulation-votes-2"),
   simulationPercent1: document.getElementById("simulation-percent-1"),
   simulationPercent2: document.getElementById("simulation-percent-2"),
+  simulationQuotientInfo: document.getElementById("simulation-quotient-info"),
   simulationResult: document.getElementById("simulation-result"),
   history: document.getElementById("history"),
   resetHint: document.getElementById("reset-hint"),
@@ -324,9 +326,16 @@ function renderSeatAllocation() {
   const allocation = state.seatAllocation;
   if (!allocation) {
     elements.seatsSummary.textContent = "Calcul indisponible pour le moment.";
+    elements.seatsQuotientInfo.textContent = "QE: -";
     elements.seatsTable.innerHTML = "";
     return;
   }
+
+  const quotientLabel = `QE: ${state.expressedVotes} / ${allocation.proportionalSeats} = ${formatDecimal(
+    allocation.quotientElectoral,
+    2
+  )}`;
+  elements.seatsQuotientInfo.textContent = quotientLabel;
 
   if (allocation.status === "no_expressed_votes") {
     elements.seatsSummary.textContent =
@@ -455,6 +464,7 @@ function updateSimulationPercentages(simulatedLists) {
 
 function renderSimulationResult() {
   if (!isSimulationEnabled) {
+    elements.simulationQuotientInfo.textContent = "QE simulation: -";
     elements.simulationResult.innerHTML = "";
     return;
   }
@@ -465,6 +475,9 @@ function renderSimulationResult() {
     simulatedLists,
     Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS
   );
+  elements.simulationQuotientInfo.textContent = `QE simulation: ${
+    allocation.expressedVotes
+  } / ${allocation.proportionalSeats} = ${formatDecimal(allocation.quotientElectoral, 2)}`;
 
   if (allocation.status === "no_expressed_votes") {
     elements.simulationResult.innerHTML =

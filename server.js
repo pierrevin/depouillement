@@ -235,8 +235,8 @@ async function handleApi(req, res, url) {
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
-      if (![1, -1, 5, -5].includes(delta)) {
-        sendJson(res, 400, { error: "delta doit valoir 1, -1, 5 ou -5." });
+      if (![1, -1].includes(delta)) {
+        sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
         return true;
       }
       const list = state.lists.find((item) => item.id === body.listId);
@@ -273,8 +273,8 @@ async function handleApi(req, res, url) {
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
-      if (![1, -1, 5, -5].includes(delta)) {
-        sendJson(res, 400, { error: "delta doit valoir 1, -1, 5 ou -5." });
+      if (![1, -1].includes(delta)) {
+        sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
         return true;
       }
 

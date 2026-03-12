@@ -37,16 +37,17 @@
         </form>
       </section>
 
-      <section class="panel">
-        <h2>Compteurs</h2>
-        <p class="section-subtitle">Ajoute ou retire une voix sur chaque liste en un clic.</p>
-        <div id="lists" class="lists"></div>
-      </section>
-
-      <section class="panel">
-        <h2>Blancs et nuls</h2>
-        <p class="section-subtitle">Comptage dedie des bulletins non exprimes.</p>
-        <div id="special-votes" class="special-votes"></div>
+      <section class="panel quick-panel">
+        <h2>Saisie rapide (+1)</h2>
+        <p class="section-subtitle">Une ligne pour les candidats, une ligne pour les bulletins blancs et nuls.</p>
+        <div class="quick-block">
+          <p class="quick-label">Candidats</p>
+          <div id="lists" class="quick-row"></div>
+        </div>
+        <div class="quick-block">
+          <p class="quick-label">Blancs et nuls</p>
+          <div id="special-votes" class="quick-row"></div>
+        </div>
       </section>
 
       <section class="panel stats">

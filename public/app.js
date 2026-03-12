@@ -83,23 +83,14 @@ function renderLists() {
   elements.lists.innerHTML = state.lists
     .map(
       (list) => `
-      <article class="card">
-        <h3>${escapeHtml(list.name)}</h3>
-        <p class="votes">${list.votes}</p>
-        <p class="percent">${formatPercentage(list.percentage)}</p>
-        <div class="vote-actions vote-actions-mobile">
-          <button class="plus-one" data-action="vote" data-list-id="${list.id}" data-delta="1">+1</button>
-          <button class="plus-five" data-action="vote" data-list-id="${list.id}" data-delta="5">+5</button>
-        </div>
-        <div class="vote-actions vote-actions-secondary">
-          <button class="ghost" data-action="vote" data-list-id="${list.id}" data-delta="-1" ${
-            list.votes < 1 ? "disabled" : ""
-          }>-1 Corriger</button>
-          <button class="ghost" data-action="vote" data-list-id="${list.id}" data-delta="-5" ${
-            list.votes < 5 ? "disabled" : ""
-          }>-5 Corriger lot</button>
-        </div>
-      </article>
+      <button class="quick-button candidate" data-action="vote" data-list-id="${list.id}" data-delta="1">
+        <span class="quick-title">${escapeHtml(list.name)}</span>
+        <span class="quick-meta">
+          <span class="quick-count">${list.votes}</span>
+          <span class="quick-percent">${formatPercentage(list.percentage)}</span>
+        </span>
+        <span class="quick-cta">+1</span>
+      </button>
     `
     )
     .join("");
@@ -133,22 +124,13 @@ function renderSpecialVotes() {
   elements.specialVotes.innerHTML = special
     .map(
       (item) => `
-      <article class="card">
-        <h3>${escapeHtml(item.label)}</h3>
-        <p class="votes">${item.votes}</p>
-        <div class="vote-actions vote-actions-mobile">
-          <button class="${item.className} plus-one" data-action="special-vote" data-kind="${item.kind}" data-delta="1">+1</button>
-          <button class="${item.className} plus-five" data-action="special-vote" data-kind="${item.kind}" data-delta="5">+5</button>
-        </div>
-        <div class="vote-actions vote-actions-secondary">
-          <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-1" ${
-            item.votes < 1 ? "disabled" : ""
-          }>-1 Corriger</button>
-          <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-5" ${
-            item.votes < 5 ? "disabled" : ""
-          }>-5 Corriger lot</button>
-        </div>
-      </article>
+      <button class="quick-button ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">
+        <span class="quick-title">${escapeHtml(item.label)}</span>
+        <span class="quick-meta">
+          <span class="quick-count">${item.votes}</span>
+        </span>
+        <span class="quick-cta">+1</span>
+      </button>
     `
     )
     .join("");

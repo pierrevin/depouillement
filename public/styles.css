@@ -195,6 +195,82 @@ button.danger {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.quick-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.quick-block {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.quick-label {
+  margin: 0;
+  font-weight: 700;
+  color: #34465f;
+  font-size: 0.95rem;
+}
+
+.quick-row {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quick-button {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  text-align: left;
+  padding: 0.72rem 0.74rem;
+  background: linear-gradient(180deg, #2579dd 0%, #1664bd 100%);
+  color: #fff;
+  box-shadow: 0 10px 20px -16px rgba(12, 36, 72, 0.8);
+  display: grid;
+  gap: 0.22rem;
+}
+
+.quick-button.candidate:nth-child(2) {
+  background: linear-gradient(180deg, #2a995a 0%, #1a7a46 100%);
+}
+
+.quick-button.blanc {
+  background: linear-gradient(180deg, #0f8a7b 0%, #0a6a5f 100%);
+}
+
+.quick-button.nul {
+  background: linear-gradient(180deg, #7d3cb5 0%, #622c91 100%);
+}
+
+.quick-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.quick-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.quick-count {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.quick-percent {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.quick-cta {
+  font-size: 0.86rem;
+  font-weight: 700;
+  opacity: 0.95;
+}
+
 .card {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -380,6 +456,14 @@ button.danger {
   .special-votes,
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .quick-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-button {
+    min-height: 94px;
   }
 
   .actions-panel {

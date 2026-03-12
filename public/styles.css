@@ -463,6 +463,51 @@ button.danger {
   gap: 0.6rem;
 }
 
+.simulation-panel {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.simulation-headline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.simulation-content {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.simulation-panel:not(.enabled) .simulation-content {
+  display: none;
+}
+
+.simulation-form {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  align-items: end;
+}
+
+.simulation-step {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.68rem;
+  background: #fcfdff;
+}
+
+.simulation-step h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.97rem;
+}
+
+.simulation-step p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -483,6 +528,12 @@ button.danger {
 .seats-table th {
   color: #5a6c81;
   font-weight: 700;
+}
+
+.seats-table.compact th,
+.seats-table.compact td {
+  font-size: 0.86rem;
+  padding: 0.44rem 0.32rem;
 }
 
 .seats-table .leader-row td {
@@ -604,6 +655,10 @@ button.compact-reset.armed {
 
   .quick-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .simulation-form {
+    grid-template-columns: 1fr;
   }
 
   .quick-button {

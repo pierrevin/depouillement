@@ -16,11 +16,16 @@ let resetArmTimeout = null;
 let isResetArmed = false;
 let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
+const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
+let isSimulationEnabled = false;
+const simulationVotesByList = {};
 
 const elements = {
   status: document.getElementById("status"),
   configPanel: document.getElementById("config-panel"),
   configToggle: document.getElementById("config-toggle"),
+  configLabel1: document.getElementById("config-label-1"),
+  configLabel2: document.getElementById("config-label-2"),
   configForm: document.getElementById("config-form"),
   name1: document.getElementById("name-1"),
   name2: document.getElementById("name-2"),
@@ -36,6 +41,15 @@ const elements = {
   bars: document.getElementById("bars"),
   seatsSummary: document.getElementById("seats-summary"),
   seatsTable: document.getElementById("seats-table"),
+  simulationPanel: document.getElementById("simulation-panel"),
+  simulationToggle: document.getElementById("simulation-toggle"),
+  simulationContent: document.getElementById("simulation-content"),
+  simulationForm: document.getElementById("simulation-form"),
+  simulationLabel1: document.getElementById("simulation-label-1"),
+  simulationLabel2: document.getElementById("simulation-label-2"),
+  simulationVotes1: document.getElementById("simulation-votes-1"),
+  simulationVotes2: document.getElementById("simulation-votes-2"),
+  simulationResult: document.getElementById("simulation-result"),
   history: document.getElementById("history"),
   resetHint: document.getElementById("reset-hint"),
   resetButton: document.getElementById("reset-button"),
@@ -70,6 +84,154 @@ function escapeHtml(value) {
     };
     return map[char];
   });
+}
+
+function formatDecimal(value, decimals = 2) {
+  return Number(value).toFixed(decimals).replace(".", ",");
+}
+
+function sum(values) {
+  return values.reduce((acc, value) => acc + value, 0);
+}
+
+function computeSeatAllocationDetailed(listsInput) {
+  const lists = listsInput.map((list) => ({ ...list, votes: Math.max(0, Number(list.votes) || 0) }));
+  const expressedVotes = sum(lists.map((list) => list.votes));
+  const totalSeats = 21;
+  const primeSeats = Math.ceil(totalSeats / 2);
+  const proportionalSeats = totalSeats - primeSeats;
+  const thresholdPercent = 5;
+  const thresholdVotesRaw = expressedVotes * (thresholdPercent / 100);
+  const quotientElectoral = proportionalSeats > 0 ? expressedVotes / proportionalSeats : 0;
+
+  if (expressedVotes === 0) {
+    return {
+      status: "no_expressed_votes",
+      expressedVotes,
+      totalSeats,
+      primeSeats,
+      proportionalSeats,
+      thresholdPercent,
+      thresholdVotes: 0,
+      quotientElectoral: 0,
+      rows: lists.map((list) => ({
+        ...list,
+        initialProportionalSeats: 0,
+        proportionalSeats: 0,
+        primeBonus: 0,
+        totalSeats: 0,
+        eligible: false
+      })),
+      rounds: [],
+      leaderId: null,
+      leaderName: null,
+      hasTieForLead: false
+    };
+  }
+
+  const sorted = [...lists].sort((a, b) => b.votes - a.votes);
+  const leaderCandidate = sorted[0];
+  const runnerUp = sorted[1];
+  const hasTieForLead = Boolean(runnerUp && leaderCandidate && leaderCandidate.votes === runnerUp.votes);
+  if (hasTieForLead || !leaderCandidate) {
+    return {
+      status: "tie_for_lead",
+      expressedVotes,
+      totalSeats,
+      primeSeats,
+      proportionalSeats,
+      thresholdPercent,
+      thresholdVotes: Number(thresholdVotesRaw.toFixed(2)),
+      quotientElectoral: Number(quotientElectoral.toFixed(4)),
+      rows: lists.map((list) => ({
+        ...list,
+        initialProportionalSeats: 0,
+        proportionalSeats: 0,
+        primeBonus: 0,
+        totalSeats: 0,
+        eligible: list.votes >= thresholdVotesRaw
+      })),
+      rounds: [],
+      leaderId: null,
+      leaderName: null,
+      hasTieForLead: true
+    };
+  }
+
+  const leaderId = leaderCandidate.id;
+  const eligibleLists = lists.filter((list) => list.votes >= thresholdVotesRaw);
+  const proportionalByListId = Object.fromEntries(lists.map((list) => [list.id, 0]));
+  const initialByListId = Object.fromEntries(lists.map((list) => [list.id, 0]));
+
+  if (quotientElectoral > 0) {
+    for (const list of eligibleLists) {
+      const seats = Math.floor(list.votes / quotientElectoral);
+      proportionalByListId[list.id] = seats;
+      initialByListId[list.id] = seats;
+    }
+  }
+
+  let remaining = Math.max(0, proportionalSeats - sum(eligibleLists.map((list) => proportionalByListId[list.id] || 0)));
+  const rounds = [];
+
+  while (remaining > 0 && eligibleLists.length > 0) {
+    const ranked = [...eligibleLists]
+      .map((list) => {
+        const currentSeats = proportionalByListId[list.id] || 0;
+        return {
+          listId: list.id,
+          listName: list.name,
+          votes: list.votes,
+          currentSeats,
+          average: list.votes / (currentSeats + 1)
+        };
+      })
+      .sort((a, b) => {
+        if (b.average !== a.average) return b.average - a.average;
+        if (b.votes !== a.votes) return b.votes - a.votes;
+        return a.listId.localeCompare(b.listId);
+      });
+
+    const winner = ranked[0];
+    rounds.push({
+      round: rounds.length + 1,
+      winnerId: winner.listId,
+      winnerName: winner.listName,
+      winnerAverage: winner.average,
+      candidates: ranked
+    });
+    proportionalByListId[winner.listId] = (proportionalByListId[winner.listId] || 0) + 1;
+    remaining -= 1;
+  }
+
+  const rows = lists.map((list) => {
+    const proportional = proportionalByListId[list.id] || 0;
+    const primeBonus = list.id === leaderId ? primeSeats : 0;
+    return {
+      ...list,
+      initialProportionalSeats: initialByListId[list.id] || 0,
+      proportionalSeats: proportional,
+      primeBonus,
+      totalSeats: primeBonus + proportional,
+      eligible: list.votes >= thresholdVotesRaw
+    };
+  });
+
+  return {
+    status: "ok",
+    expressedVotes,
+    totalSeats,
+    primeSeats,
+    proportionalSeats,
+    thresholdPercent,
+    thresholdVotes: Number(thresholdVotesRaw.toFixed(2)),
+    quotientElectoral: Number(quotientElectoral.toFixed(4)),
+    rows,
+    rounds,
+    leaderId,
+    leaderName: leaderCandidate.name,
+    hasTieForLead: false
+  };
 }
 
 function historyLabel(entry) {
@@ -210,6 +372,185 @@ function renderSeatAllocation() {
   `;
 }
 
+function setSimulationEnabled(enabled) {
+  isSimulationEnabled = enabled;
+  elements.simulationPanel.classList.toggle("enabled", enabled);
+  elements.simulationToggle.textContent = enabled ? "Desactiver" : "Activer";
+  try {
+    localStorage.setItem(SIMULATION_COLLAPSE_KEY, enabled ? "1" : "0");
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
+}
+
+function loadSimulationPreference() {
+  try {
+    return localStorage.getItem(SIMULATION_COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function syncSimulationVotesWithCurrentState() {
+  for (const list of state.lists) {
+    if (!Number.isInteger(simulationVotesByList[list.id])) {
+      simulationVotesByList[list.id] = list.votes;
+    }
+  }
+}
+
+function updateSimulationLabels() {
+  const list1 = state.lists[0];
+  const list2 = state.lists[1];
+  if (list1) {
+    elements.simulationLabel1.textContent = list1.name;
+  }
+  if (list2) {
+    elements.simulationLabel2.textContent = list2.name;
+  }
+}
+
+function setSimulationInputValues() {
+  const list1 = state.lists[0];
+  const list2 = state.lists[1];
+  if (!list1 || !list2) return;
+  elements.simulationVotes1.value = String(simulationVotesByList[list1.id] ?? list1.votes ?? 0);
+  elements.simulationVotes2.value = String(simulationVotesByList[list2.id] ?? list2.votes ?? 0);
+}
+
+function parseSimulationVotes() {
+  const list1 = state.lists[0];
+  const list2 = state.lists[1];
+  if (!list1 || !list2) return [];
+
+  const votes1 = Math.max(0, Number.parseInt(elements.simulationVotes1.value || "0", 10) || 0);
+  const votes2 = Math.max(0, Number.parseInt(elements.simulationVotes2.value || "0", 10) || 0);
+  simulationVotesByList[list1.id] = votes1;
+  simulationVotesByList[list2.id] = votes2;
+  return [
+    { id: list1.id, name: list1.name, votes: votes1 },
+    { id: list2.id, name: list2.name, votes: votes2 }
+  ];
+}
+
+function renderSimulationResult() {
+  if (!isSimulationEnabled) {
+    elements.simulationResult.innerHTML = "";
+    return;
+  }
+
+  const simulatedLists = parseSimulationVotes();
+  const allocation = computeSeatAllocationDetailed(simulatedLists);
+
+  if (allocation.status === "no_expressed_votes") {
+    elements.simulationResult.innerHTML =
+      '<p class="seats-note">Entre des voix exprimees pour lancer la simulation des elus.</p>';
+    return;
+  }
+
+  if (allocation.status === "tie_for_lead") {
+    elements.simulationResult.innerHTML =
+      '<p class="seats-note">Egalite en tete dans la simulation: il faut un gagnant unique pour attribuer la prime de 11 sieges.</p>';
+    return;
+  }
+
+  const initialAllocated = sum(allocation.rows.map((row) => row.initialProportionalSeats));
+  const remainderSeats = Math.max(0, allocation.proportionalSeats - initialAllocated);
+  const finalRows = [...allocation.rows].sort((a, b) => b.totalSeats - a.totalSeats);
+
+  elements.simulationResult.innerHTML = `
+    <div class="simulation-step">
+      <h3>1. Prime majoritaire</h3>
+      <p>La liste en tete (${escapeHtml(allocation.leaderName)}) recoit <strong>${allocation.primeSeats} sieges</strong>.</p>
+    </div>
+    <div class="simulation-step">
+      <h3>2. Sieges restant a repartir</h3>
+      <p>${allocation.totalSeats} - ${allocation.primeSeats} = <strong>${allocation.proportionalSeats} sieges</strong> en proportionnelle.</p>
+    </div>
+    <div class="simulation-step">
+      <h3>3. Quotient electoral</h3>
+      <p>QE = suffrages exprimes / ${allocation.proportionalSeats} = ${allocation.expressedVotes} / ${allocation.proportionalSeats} = <strong>${formatDecimal(allocation.quotientElectoral, 2)}</strong></p>
+    </div>
+    <div class="simulation-step">
+      <h3>4. Attribution initiale</h3>
+      <div class="table-wrap">
+        <table class="seats-table compact">
+          <thead>
+            <tr><th>Liste</th><th>Voix</th><th>Sieges initiaux</th></tr>
+          </thead>
+          <tbody>
+            ${allocation.rows
+              .map(
+                (row) => `
+                <tr>
+                  <td>${escapeHtml(row.name)}</td>
+                  <td>${row.votes}</td>
+                  <td>${row.initialProportionalSeats}</td>
+                </tr>
+              `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+      <p>Total initial: <strong>${initialAllocated}</strong> siege(s). Reste: <strong>${remainderSeats}</strong>.</p>
+    </div>
+    <div class="simulation-step">
+      <h3>5. Plus forte moyenne</h3>
+      ${
+        allocation.rounds.length
+          ? `<div class="table-wrap">
+              <table class="seats-table compact">
+                <thead>
+                  <tr><th>Tour</th><th>Moyennes</th><th>Siege attribue</th></tr>
+                </thead>
+                <tbody>
+                  ${allocation.rounds
+                    .map(
+                      (round) => `
+                      <tr>
+                        <td>${round.round}</td>
+                        <td>${round.candidates
+                          .map((c) => `${escapeHtml(c.listName)}: ${formatDecimal(c.average, 2)}`)
+                          .join(" | ")}</td>
+                        <td>${escapeHtml(round.winnerName)}</td>
+                      </tr>
+                    `
+                    )
+                    .join("")}
+                </tbody>
+              </table>
+            </div>`
+          : '<p class="seats-note">Aucun tour supplementaire necessaire.</p>'
+      }
+    </div>
+    <div class="simulation-step">
+      <h3>6. Resultat final</h3>
+      <div class="table-wrap">
+        <table class="seats-table">
+          <thead>
+            <tr><th>Liste</th><th>Proportionnelle</th><th>Prime</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            ${finalRows
+              .map(
+                (row) => `
+                <tr class="${row.id === allocation.leaderId ? "leader-row" : ""}">
+                  <td>${escapeHtml(row.name)}</td>
+                  <td>${row.proportionalSeats}</td>
+                  <td>${row.primeBonus}</td>
+                  <td><strong>${row.totalSeats}</strong></td>
+                </tr>
+              `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function setConfigCollapsed(collapsed) {
   isConfigCollapsed = collapsed;
   elements.configPanel.classList.toggle("collapsed", collapsed);
@@ -286,6 +627,16 @@ function render() {
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   elements.name1.value = state.lists[0]?.name || "";
   elements.name2.value = state.lists[1]?.name || "";
+  elements.configLabel1.innerHTML = `<span class="color-dot color-candidate-1"></span>${escapeHtml(
+    state.lists[0]?.name || "Liste bleue"
+  )} (bouton bleu)`;
+  elements.configLabel2.innerHTML = `<span class="color-dot color-candidate-2"></span>${escapeHtml(
+    state.lists[1]?.name || "Liste orange"
+  )} (bouton orange)`;
+  syncSimulationVotesWithCurrentState();
+  updateSimulationLabels();
+  setSimulationInputValues();
+  renderSimulationResult();
   elements.undoButton.disabled = state.history.length === 0;
   const canReset = state.totalBallots > 0;
   elements.resetButton.disabled = !canReset;
@@ -340,6 +691,24 @@ async function loadInitialState() {
 function setupEvents() {
   elements.configToggle.addEventListener("click", () => {
     setConfigCollapsed(!isConfigCollapsed);
+  });
+
+  elements.simulationToggle.addEventListener("click", () => {
+    setSimulationEnabled(!isSimulationEnabled);
+    renderSimulationResult();
+  });
+
+  elements.simulationForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderSimulationResult();
+  });
+
+  elements.simulationVotes1.addEventListener("input", () => {
+    renderSimulationResult();
+  });
+
+  elements.simulationVotes2.addEventListener("input", () => {
+    renderSimulationResult();
   });
 
   elements.configForm.addEventListener("submit", async (event) => {
@@ -433,6 +802,7 @@ function setupRealtime() {
 
 async function boot() {
   setConfigCollapsed(loadConfigCollapsePreference());
+  setSimulationEnabled(loadSimulationPreference());
   setupEvents();
   await loadInitialState();
   setupRealtime();

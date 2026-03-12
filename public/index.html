@@ -29,11 +29,15 @@
           <p class="section-subtitle">Renomme les listes et repere leur couleur de saisie.</p>
           <form id="config-form" class="form-inline">
             <label>
-              <span class="label-line"><span class="color-dot color-candidate-1"></span>Liste 1 (Bleu)</span>
+              <span id="config-label-1" class="label-line"
+                ><span class="color-dot color-candidate-1"></span>Liste bleue</span
+              >
               <input id="name-1" required maxlength="40" />
             </label>
             <label>
-              <span class="label-line"><span class="color-dot color-candidate-2"></span>Liste 2 (Orange)</span>
+              <span id="config-label-2" class="label-line"
+                ><span class="color-dot color-candidate-2"></span>Liste orange</span
+              >
               <input id="name-2" required maxlength="40" />
             </label>
             <button type="submit">Enregistrer</button>
@@ -90,6 +94,30 @@
         <h2>Calcul des elus (21 sieges)</h2>
         <p id="seats-summary" class="section-subtitle">Les sieges seront calcules automatiquement avec la prime majoritaire.</p>
         <div id="seats-table"></div>
+      </section>
+
+      <section class="panel simulation-panel" id="simulation-panel">
+        <div class="simulation-headline">
+          <h2>Mode simulation</h2>
+          <button id="simulation-toggle" type="button" class="ghost compact-action">Activer</button>
+        </div>
+        <div id="simulation-content" class="simulation-content">
+          <p class="section-subtitle">
+            Simule une repartition sur 21 sieges avec des voix exprimees fictives.
+          </p>
+          <form id="simulation-form" class="simulation-form">
+            <label>
+              <span id="simulation-label-1">Liste bleue</span>
+              <input id="simulation-votes-1" type="number" min="0" step="1" />
+            </label>
+            <label>
+              <span id="simulation-label-2">Liste orange</span>
+              <input id="simulation-votes-2" type="number" min="0" step="1" />
+            </label>
+            <button type="submit">Recalculer</button>
+          </form>
+          <div id="simulation-result"></div>
+        </div>
       </section>
 
       <section class="panel actions-panel">

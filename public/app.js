@@ -26,6 +26,7 @@ const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const MANUAL_COLLAPSE_KEY = "depouillement-manual-collapsed";
 const DEFAULT_TOTAL_SEATS = 19;
+const CHARTER_COLORS = ["#0e7fad", "#ec654f"];
 let currentWritePin = "";
 let isSimulationEnabled = false;
 let isManualCollapsed = true;
@@ -372,7 +373,6 @@ function renderLists() {
 }
 
 function renderBars() {
-  const colors = ["#1b74d4", "#d5821a"];
   elements.bars.innerHTML = state.lists
     .map(
       (list, index) => `
@@ -382,7 +382,7 @@ function renderBars() {
           <span>${list.votes} (${formatPercentage(list.percentage)})</span>
         </div>
         <div class="bar-track">
-          <div class="bar-fill" style="width:${list.percentage}%;background:${colors[index % colors.length]}"></div>
+          <div class="bar-fill" style="width:${list.percentage}%;background:${CHARTER_COLORS[index % CHARTER_COLORS.length]}"></div>
         </div>
       </div>
     `
@@ -906,11 +906,11 @@ function render() {
   setInputValueIfIdle(elements.name2, state.lists[1]?.name || "");
   setInputValueIfIdle(elements.registeredVotersInput, state.registeredVoters);
   elements.configLabel1.innerHTML = `<span class="color-dot color-candidate-1"></span>${escapeHtml(
-    state.lists[0]?.name || "Liste bleue"
-  )} (bouton bleu)`;
+    state.lists[0]?.name || "Liste lagon"
+  )} (bouton lagon)`;
   elements.configLabel2.innerHTML = `<span class="color-dot color-candidate-2"></span>${escapeHtml(
-    state.lists[1]?.name || "Liste orange"
-  )} (bouton orange)`;
+    state.lists[1]?.name || "Liste corail"
+  )} (bouton corail)`;
   const writable = canWrite();
   elements.name1.disabled = !writable;
   elements.name2.disabled = !writable;

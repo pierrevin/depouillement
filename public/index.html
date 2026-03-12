@@ -3,21 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Osons compter</title>
+    <title>Osons Saint-Paul - Depouillement</title>
+    <meta name="theme-color" content="#004a6d" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="container">
       <header class="hero panel">
         <div class="hero-top">
-          <p class="eyebrow">Scrutin en direct</p>
+          <div class="brand-lockup">
+            <img src="/logo-osons-saint-paul.svg" alt="Logo Osons Saint-Paul" class="brand-logo" />
+            <div>
+              <p class="eyebrow">Osons Saint-Paul</p>
+              <h1>Depouillement en direct</h1>
+            </div>
+          </div>
           <div class="hero-actions">
             <span id="status" class="status offline">Hors ligne</span>
             <button id="admin-menu-button" type="button" class="hero-menu-button">Menu admin</button>
           </div>
         </div>
-        <h1>Osons compter</h1>
-        <p class="subtitle">Comptage simple, instantane et partage en temps reel entre tous les appareils.</p>
+        <p class="subtitle">Comptage simple, instantane et partage en temps reel pour toute l'equipe.</p>
         <div class="hero-meta">
           <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
           <p id="live-mode-badge" class="mode-chip mode-readonly">Mode lecteur</p>
@@ -61,13 +67,13 @@
           <form id="config-form" class="form-inline">
             <label>
               <span id="config-label-1" class="label-line"
-                ><span class="color-dot color-candidate-1"></span>Liste bleue</span
+                ><span class="color-dot color-candidate-1"></span>Liste lagon</span
               >
               <input id="name-1" required maxlength="40" />
             </label>
             <label>
               <span id="config-label-2" class="label-line"
-                ><span class="color-dot color-candidate-2"></span>Liste orange</span
+                ><span class="color-dot color-candidate-2"></span>Liste corail</span
               >
               <input id="name-2" required maxlength="40" />
             </label>
@@ -160,12 +166,12 @@
           <p id="simulation-quotient-info" class="mini">QE simulation: -</p>
           <form id="simulation-form" class="simulation-form">
             <label>
-              <span id="simulation-label-1">Liste bleue</span>
+              <span id="simulation-label-1">Liste lagon</span>
               <input id="simulation-votes-1" type="number" min="0" step="1" />
               <span id="simulation-percent-1" class="simulation-percent">0,0 % des exprimes simules</span>
             </label>
             <label>
-              <span id="simulation-label-2">Liste orange</span>
+              <span id="simulation-label-2">Liste corail</span>
               <input id="simulation-votes-2" type="number" min="0" step="1" />
               <span id="simulation-percent-2" class="simulation-percent">0,0 % des exprimes simules</span>
             </label>

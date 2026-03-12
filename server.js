@@ -7,6 +7,8 @@ const HOST = "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 const parsedTotalSeats = Number.parseInt(process.env.TOTAL_SEATS || "19", 10);
 const TOTAL_SEATS = Number.isInteger(parsedTotalSeats) && parsedTotalSeats > 0 ? parsedTotalSeats : 19;
+const WRITE_PIN = String(process.env.WRITE_PIN || "").trim();
+const WRITE_PROTECTION_ENABLED = WRITE_PIN.length > 0;
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 
@@ -251,6 +253,7 @@ function computePublicState() {
     nonExpressedVotes,
     registeredVoters: state.registeredVoters,
     participationPercent,
+    writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
     blankVotes: state.blankVotes,
     nullVotes: state.nullVotes,
     leader: leader || null,
@@ -270,6 +273,27 @@ function sendJson(res, statusCode, payload) {
     "Cache-Control": "no-store"
   });
   res.end(body);
+}
+
+function isWriteAuthorized(req) {
+  if (!WRITE_PROTECTION_ENABLED) {
+    return true;
+  }
+  const provided = req.headers["x-write-pin"];
+  if (Array.isArray(provided)) {
+    return provided.includes(WRITE_PIN);
+  }
+  return typeof provided === "string" && provided === WRITE_PIN;
+}
+
+function ensureWriteAccess(req, res) {
+  if (isWriteAuthorized(req)) {
+    return true;
+  }
+  sendJson(res, 403, {
+    error: "Mode lecture seule: PIN requis pour modifier le depouillement."
+  });
+  return false;
 }
 
 function pushHistory(entry) {
@@ -344,6 +368,24 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/access") {
+    sendJson(res, 200, { writeProtectionEnabled: WRITE_PROTECTION_ENABLED });
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/access/verify") {
+    try {
+      const body = await parseJsonBody(req);
+      const providedPin = typeof body.pin === "string" ? body.pin.trim() : "";
+      const ok = !WRITE_PROTECTION_ENABLED || providedPin === WRITE_PIN;
+      sendJson(res, 200, { ok, writeProtectionEnabled: WRITE_PROTECTION_ENABLED });
+      return true;
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+      return true;
+    }
+  }
+
   if (req.method === "GET" && url.pathname === "/api/events") {
     res.writeHead(200, {
       "Content-Type": "text/event-stream; charset=utf-8",
@@ -357,6 +399,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/config") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
     try {
       const body = await parseJsonBody(req);
       const names = Array.isArray(body.names) ? body.names : [];
@@ -396,6 +441,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/vote") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
@@ -434,6 +482,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/special-vote") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
@@ -483,6 +534,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/reset") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
     const previous = snapshotBeforeChange();
     state.lists = state.lists.map((list) => ({ ...list, votes: 0 }));
     state.blankVotes = 0;
@@ -499,6 +553,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/undo") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
     const last = state.history.pop();
     if (!last) {
       sendJson(res, 400, { error: "Aucune action a annuler." });
@@ -534,6 +591,59 @@ async function handleApi(req, res, url) {
     broadcast();
     sendJson(res, 200, computePublicState());
     return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/set-totals") {
+    if (!ensureWriteAccess(req, res)) {
+      return true;
+    }
+    try {
+      const body = await parseJsonBody(req);
+      const listVotes = Array.isArray(body.listVotes) ? body.listVotes : [];
+      if (listVotes.length !== state.lists.length) {
+        sendJson(res, 400, { error: "listVotes doit contenir 2 valeurs." });
+        return true;
+      }
+
+      const parsedVotes = listVotes.map((value) => Number(value));
+      if (!parsedVotes.every((value) => Number.isInteger(value) && value >= 0)) {
+        sendJson(res, 400, { error: "Les voix des listes doivent etre des entiers >= 0." });
+        return true;
+      }
+
+      const blankVotes = Number(body.blankVotes);
+      const nullVotes = Number(body.nullVotes);
+      if (!Number.isInteger(blankVotes) || blankVotes < 0) {
+        sendJson(res, 400, { error: "blankVotes doit etre un entier >= 0." });
+        return true;
+      }
+      if (!Number.isInteger(nullVotes) || nullVotes < 0) {
+        sendJson(res, 400, { error: "nullVotes doit etre un entier >= 0." });
+        return true;
+      }
+
+      const previous = snapshotBeforeChange();
+      state.lists.forEach((list, index) => {
+        list.votes = parsedVotes[index];
+      });
+      state.blankVotes = blankVotes;
+      state.nullVotes = nullVotes;
+      updateTimestamp();
+      pushHistory({
+        type: "set_totals",
+        listVotes: parsedVotes,
+        blankVotes,
+        nullVotes,
+        ...previous
+      });
+      saveState();
+      broadcast();
+      sendJson(res, 200, computePublicState());
+      return true;
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+      return true;
+    }
   }
 
   return false;

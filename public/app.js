@@ -4,6 +4,8 @@ const state = {
   expressedVotes: 0,
   registeredVoters: 0,
   participationPercent: null,
+  writeProtectionEnabled: false,
+  isWriteUnlocked: false,
   blankVotes: 0,
   nullVotes: 0,
   gap: 0,
@@ -20,11 +22,19 @@ let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const DEFAULT_TOTAL_SEATS = 19;
+const WRITE_PIN_STORAGE_KEY = "depouillement-write-pin";
 let isSimulationEnabled = false;
 const simulationVotesByList = {};
 
 const elements = {
   status: document.getElementById("status"),
+  accessPanel: document.getElementById("access-panel"),
+  accessForm: document.getElementById("access-form"),
+  accessPin: document.getElementById("access-pin"),
+  accessHelp: document.getElementById("access-help"),
+  accessModeBadge: document.getElementById("access-mode-badge"),
+  unlockButton: document.getElementById("unlock-button"),
+  lockButton: document.getElementById("lock-button"),
   configPanel: document.getElementById("config-panel"),
   configToggle: document.getElementById("config-toggle"),
   configLabel1: document.getElementById("config-label-1"),
@@ -66,6 +76,14 @@ const elements = {
   simulationQuotientInfo: document.getElementById("simulation-quotient-info"),
   simulationResult: document.getElementById("simulation-result"),
   history: document.getElementById("history"),
+  manualForm: document.getElementById("manual-form"),
+  manualLabel1: document.getElementById("manual-label-1"),
+  manualLabel2: document.getElementById("manual-label-2"),
+  manualVotes1: document.getElementById("manual-votes-1"),
+  manualVotes2: document.getElementById("manual-votes-2"),
+  manualBlankVotes: document.getElementById("manual-blank-votes"),
+  manualNullVotes: document.getElementById("manual-null-votes"),
+  manualSubmit: document.getElementById("manual-submit"),
   resetHint: document.getElementById("reset-hint"),
   resetButton: document.getElementById("reset-button"),
   undoButton: document.getElementById("undo-button")
@@ -107,6 +125,36 @@ function formatDecimal(value, decimals = 2) {
 
 function sum(values) {
   return values.reduce((acc, value) => acc + value, 0);
+}
+
+function canWrite() {
+  return !state.writeProtectionEnabled || state.isWriteUnlocked;
+}
+
+function setStoredWritePin(pin) {
+  try {
+    if (pin) {
+      localStorage.setItem(WRITE_PIN_STORAGE_KEY, pin);
+    } else {
+      localStorage.removeItem(WRITE_PIN_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
+}
+
+function getStoredWritePin() {
+  try {
+    return localStorage.getItem(WRITE_PIN_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function setInputValueIfIdle(input, value) {
+  if (document.activeElement !== input) {
+    input.value = String(value);
+  }
 }
 
 function computeSeatAllocationDetailed(listsInput, totalSeatsInput = DEFAULT_TOTAL_SEATS) {
@@ -266,14 +314,20 @@ function historyLabel(entry) {
   if (entry.type === "config") {
     return `${formatDate(entry.at)} - Noms des listes modifies`;
   }
+  if (entry.type === "set_totals") {
+    return `${formatDate(entry.at)} - Totaux saisis manuellement`;
+  }
   return `${formatDate(entry.at)} - Action`;
 }
 
 function renderLists() {
+  const writable = canWrite();
   elements.lists.innerHTML = state.lists
     .map(
       (list, index) => `
-      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1">
+      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1" ${
+        writable ? "" : "disabled"
+      }>
         <span class="quick-title">${escapeHtml(list.name)}</span>
         <span class="quick-meta">
           <span class="quick-count">${list.votes}</span>
@@ -306,6 +360,7 @@ function renderBars() {
 }
 
 function renderSpecialVotes() {
+  const writable = canWrite();
   const special = [
     { kind: "blank", label: "Blancs", votes: state.blankVotes, className: "blanc" },
     { kind: "null", label: "Nuls", votes: state.nullVotes, className: "nul" }
@@ -314,7 +369,9 @@ function renderSpecialVotes() {
   elements.specialVotes.innerHTML = special
     .map(
       (item) => `
-      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">
+      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" ${
+        writable ? "" : "disabled"
+      }>
         <span class="quick-title">${escapeHtml(item.label)}</span>
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>
@@ -600,6 +657,53 @@ function renderSimulationResult() {
   `;
 }
 
+function renderAccessControls() {
+  if (!state.writeProtectionEnabled) {
+    elements.accessModeBadge.textContent = "Saisie libre";
+    elements.accessModeBadge.className = "access-badge open";
+    elements.accessHelp.textContent =
+      "Le PIN n'est pas configure sur le serveur. Tous les utilisateurs peuvent modifier les compteurs.";
+    elements.accessPin.disabled = true;
+    elements.unlockButton.disabled = true;
+    elements.lockButton.disabled = true;
+    return;
+  }
+
+  elements.accessPin.disabled = false;
+  elements.unlockButton.disabled = false;
+  elements.lockButton.disabled = !state.isWriteUnlocked;
+  if (state.isWriteUnlocked) {
+    elements.accessModeBadge.textContent = "Saisie active";
+    elements.accessModeBadge.className = "access-badge write";
+    elements.accessHelp.textContent =
+      "Saisie deverrouillee sur cet appareil. Les autres restent en lecture seule sans PIN.";
+  } else {
+    elements.accessModeBadge.textContent = "Lecture seule";
+    elements.accessModeBadge.className = "access-badge readonly";
+    elements.accessHelp.textContent =
+      "Entre le PIN pour autoriser la saisie sur cet appareil.";
+  }
+}
+
+function renderManualTotals() {
+  const list1 = state.lists[0];
+  const list2 = state.lists[1];
+  if (!list1 || !list2) return;
+  elements.manualLabel1.textContent = list1.name;
+  elements.manualLabel2.textContent = list2.name;
+  setInputValueIfIdle(elements.manualVotes1, list1.votes);
+  setInputValueIfIdle(elements.manualVotes2, list2.votes);
+  setInputValueIfIdle(elements.manualBlankVotes, state.blankVotes);
+  setInputValueIfIdle(elements.manualNullVotes, state.nullVotes);
+
+  const writable = canWrite();
+  elements.manualVotes1.disabled = !writable;
+  elements.manualVotes2.disabled = !writable;
+  elements.manualBlankVotes.disabled = !writable;
+  elements.manualNullVotes.disabled = !writable;
+  elements.manualSubmit.disabled = !writable;
+}
+
 function setConfigCollapsed(collapsed) {
   isConfigCollapsed = collapsed;
   elements.configPanel.classList.toggle("collapsed", collapsed);
@@ -678,26 +782,38 @@ function render() {
   }
   elements.leader.textContent = leaderLabel;
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
-  elements.name1.value = state.lists[0]?.name || "";
-  elements.name2.value = state.lists[1]?.name || "";
-  elements.registeredVotersInput.value = String(state.registeredVoters);
+  setInputValueIfIdle(elements.name1, state.lists[0]?.name || "");
+  setInputValueIfIdle(elements.name2, state.lists[1]?.name || "");
+  setInputValueIfIdle(elements.registeredVotersInput, state.registeredVoters);
   elements.configLabel1.innerHTML = `<span class="color-dot color-candidate-1"></span>${escapeHtml(
     state.lists[0]?.name || "Liste bleue"
   )} (bouton bleu)`;
   elements.configLabel2.innerHTML = `<span class="color-dot color-candidate-2"></span>${escapeHtml(
     state.lists[1]?.name || "Liste orange"
   )} (bouton orange)`;
+  const writable = canWrite();
+  elements.name1.disabled = !writable;
+  elements.name2.disabled = !writable;
+  elements.registeredVotersInput.disabled = !writable;
+  const configSubmitButton = elements.configForm.querySelector("button[type='submit']");
+  if (configSubmitButton) {
+    configSubmitButton.disabled = !writable;
+  }
   syncSimulationVotesWithCurrentState();
   updateSimulationLabels();
   setSimulationInputValues();
   renderSimulationResult();
-  elements.undoButton.disabled = state.history.length === 0;
+  renderAccessControls();
+  renderManualTotals();
+  elements.undoButton.disabled = !writable || state.history.length === 0;
   const canReset = state.totalBallots > 0;
-  elements.resetButton.disabled = !canReset;
+  elements.resetButton.disabled = !writable || !canReset;
   if (!canReset) {
     disarmResetButton("Remise a 0 indisponible: tous les compteurs sont deja a zero.");
-  } else if (!isResetArmed) {
+  } else if (!isResetArmed && writable) {
     setResetHint("");
+  } else if (!writable) {
+    disarmResetButton("");
   }
 }
 
@@ -708,6 +824,10 @@ function mergeState(nextState) {
   state.registeredVoters = nextState.registeredVoters || 0;
   state.participationPercent =
     typeof nextState.participationPercent === "number" ? nextState.participationPercent : null;
+  state.writeProtectionEnabled = Boolean(nextState.writeProtectionEnabled);
+  if (!state.writeProtectionEnabled) {
+    state.isWriteUnlocked = true;
+  }
   state.blankVotes = nextState.blankVotes || 0;
   state.nullVotes = nextState.nullVotes || 0;
   state.gap = nextState.gap || 0;
@@ -726,26 +846,108 @@ function hapticFeedback() {
 }
 
 async function callApi(endpoint, body = {}) {
+  const headers = { "Content-Type": "application/json" };
+  const pin = getStoredWritePin();
+  if (pin) {
+    headers["X-Write-Pin"] = pin;
+  }
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body)
   });
 
   const payload = await response.json();
   if (!response.ok) {
+    if (response.status === 403) {
+      state.isWriteUnlocked = false;
+      render();
+    }
     throw new Error(payload.error || "Erreur API");
   }
   return payload;
 }
 
+async function verifyWritePin(pin) {
+  const response = await fetch("/api/access/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pin })
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur de verification du PIN");
+  }
+  return payload;
+}
+
+async function initializeWriteAccess() {
+  const response = await fetch("/api/access");
+  const payload = await response.json();
+  state.writeProtectionEnabled = Boolean(payload.writeProtectionEnabled);
+  if (!state.writeProtectionEnabled) {
+    state.isWriteUnlocked = true;
+    setStoredWritePin("");
+    return;
+  }
+  const storedPin = getStoredWritePin();
+  if (!storedPin) {
+    state.isWriteUnlocked = false;
+    return;
+  }
+  try {
+    const verification = await verifyWritePin(storedPin);
+    state.isWriteUnlocked = Boolean(verification.ok);
+    if (!verification.ok) {
+      setStoredWritePin("");
+    }
+  } catch {
+    state.isWriteUnlocked = false;
+  }
+}
+
 async function loadInitialState() {
-  const response = await fetch("/api/state");
+  const headers = {};
+  const pin = getStoredWritePin();
+  if (pin) {
+    headers["X-Write-Pin"] = pin;
+  }
+  const response = await fetch("/api/state", { headers });
   const payload = await response.json();
   mergeState(payload);
 }
 
 function setupEvents() {
+  elements.accessForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!state.writeProtectionEnabled) return;
+    const pin = elements.accessPin.value.trim();
+    if (!pin) {
+      alert("Entre le PIN pour deverrouiller la saisie.");
+      return;
+    }
+    try {
+      const verification = await verifyWritePin(pin);
+      if (!verification.ok) {
+        alert("PIN incorrect.");
+        return;
+      }
+      setStoredWritePin(pin);
+      state.isWriteUnlocked = true;
+      elements.accessPin.value = "";
+      render();
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.lockButton.addEventListener("click", () => {
+    setStoredWritePin("");
+    state.isWriteUnlocked = false;
+    elements.accessPin.value = "";
+    render();
+  });
+
   elements.configToggle.addEventListener("click", () => {
     setConfigCollapsed(!isConfigCollapsed);
   });
@@ -770,6 +972,10 @@ function setupEvents() {
 
   elements.configForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (!canWrite()) {
+      alert("Mode lecture seule: deverrouille d'abord la saisie.");
+      return;
+    }
     try {
       const registeredVoters = Math.max(
         0,
@@ -787,6 +993,7 @@ function setupEvents() {
   });
 
   elements.lists.addEventListener("click", async (event) => {
+    if (!canWrite()) return;
     const button = event.target.closest("button[data-action='vote']");
     if (!button) return;
     const listId = button.dataset.listId;
@@ -801,6 +1008,7 @@ function setupEvents() {
   });
 
   elements.specialVotes.addEventListener("click", async (event) => {
+    if (!canWrite()) return;
     const button = event.target.closest("button[data-action='special-vote']");
     if (!button) return;
     const kind = button.dataset.kind;
@@ -815,6 +1023,7 @@ function setupEvents() {
   });
 
   elements.resetButton.addEventListener("click", async () => {
+    if (!canWrite()) return;
     if (elements.resetButton.disabled) return;
     if (!isResetArmed) {
       armResetButton();
@@ -833,9 +1042,31 @@ function setupEvents() {
   });
 
   elements.undoButton.addEventListener("click", async () => {
+    if (!canWrite()) return;
     try {
       const payload = await callApi("/api/undo");
       mergeState(payload);
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  elements.manualForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!canWrite()) {
+      alert("Mode lecture seule: deverrouille d'abord la saisie.");
+      return;
+    }
+    const listVotes = [
+      Math.max(0, Number.parseInt(elements.manualVotes1.value || "0", 10) || 0),
+      Math.max(0, Number.parseInt(elements.manualVotes2.value || "0", 10) || 0)
+    ];
+    const blankVotes = Math.max(0, Number.parseInt(elements.manualBlankVotes.value || "0", 10) || 0);
+    const nullVotes = Math.max(0, Number.parseInt(elements.manualNullVotes.value || "0", 10) || 0);
+    try {
+      const payload = await callApi("/api/set-totals", { listVotes, blankVotes, nullVotes });
+      mergeState(payload);
+      hapticFeedback();
     } catch (error) {
       alert(error.message);
     }
@@ -867,6 +1098,7 @@ function setupRealtime() {
 async function boot() {
   setConfigCollapsed(loadConfigCollapsePreference());
   setSimulationEnabled(loadSimulationPreference());
+  await initializeWriteAccess();
   setupEvents();
   await loadInitialState();
   setupRealtime();

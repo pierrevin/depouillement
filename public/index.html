@@ -20,6 +20,24 @@
         </div>
       </header>
 
+      <section class="panel access-panel" id="access-panel">
+        <div class="access-headline">
+          <h2>Acces saisie</h2>
+          <span id="access-mode-badge" class="access-badge">Lecture seule</span>
+        </div>
+        <p id="access-help" class="section-subtitle">
+          Partage l'URL a tous les colistiers. Seule la personne qui connait le PIN peut saisir.
+        </p>
+        <form id="access-form" class="access-form">
+          <label class="access-pin-label">
+            PIN de saisie
+            <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" />
+          </label>
+          <button id="unlock-button" type="submit">Deverrouiller</button>
+          <button id="lock-button" type="button" class="ghost">Verrouiller</button>
+        </form>
+      </section>
+
       <section class="panel config-panel" id="config-panel">
         <div class="config-headline">
           <h2>Configuration des 2 listes</h2>
@@ -146,6 +164,29 @@
           <button id="reset-button" type="button" class="danger compact-reset">Remettre a 0</button>
         </div>
         <p id="reset-hint" class="reset-hint">Double appui sur "Remettre a 0" pour confirmer.</p>
+        <div class="manual-edit">
+          <h3>Saisie manuelle des totaux</h3>
+          <form id="manual-form" class="manual-form">
+            <label>
+              <span id="manual-label-1">Liste 1</span>
+              <input id="manual-votes-1" type="number" min="0" step="1" />
+            </label>
+            <label>
+              <span id="manual-label-2">Liste 2</span>
+              <input id="manual-votes-2" type="number" min="0" step="1" />
+            </label>
+            <label>
+              <span>Blancs</span>
+              <input id="manual-blank-votes" type="number" min="0" step="1" />
+            </label>
+            <label>
+              <span>Nuls</span>
+              <input id="manual-null-votes" type="number" min="0" step="1" />
+            </label>
+            <button id="manual-submit" type="submit">Appliquer les totaux</button>
+          </form>
+          <p class="mini">Utilise cette zone en correction ou pour saisir les totaux finaux.</p>
+        </div>
       </section>
 
       <section class="panel">

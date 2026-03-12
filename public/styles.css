@@ -122,6 +122,51 @@ body {
   align-items: end;
 }
 
+.access-panel {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.access-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.access-badge {
+  border-radius: 999px;
+  padding: 0.22rem 0.56rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.access-badge.readonly {
+  background: #fff1f1;
+  color: #a33434;
+}
+
+.access-badge.write {
+  background: #e6f8ed;
+  color: #0f7a41;
+}
+
+.access-badge.open {
+  background: #eef3ff;
+  color: #274f9d;
+}
+
+.access-form {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(140px, 1fr) auto auto;
+  align-items: end;
+}
+
+.access-pin-label {
+  margin: 0;
+}
+
 .config-headline {
   display: flex;
   align-items: center;
@@ -602,6 +647,26 @@ button.danger {
   margin-bottom: 0.55rem;
 }
 
+.manual-edit {
+  margin-top: 0.72rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.62rem;
+  background: #fcfdff;
+}
+
+.manual-edit h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.92rem;
+}
+
+.manual-form {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  align-items: end;
+}
+
 button.compact-reset {
   min-height: 40px;
   padding: 0.52rem 0.72rem;
@@ -677,6 +742,14 @@ button.compact-reset.armed {
   }
 
   .simulation-form {
+    grid-template-columns: 1fr;
+  }
+
+  .access-form {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-form {
     grid-template-columns: 1fr;
   }
 

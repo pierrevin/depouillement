@@ -12,6 +12,7 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 - Champ "inscrits" avec calcul automatique du taux de participation
 - Calcul des elus sur 19 sieges (prime majoritaire + proportionnelle)
 - Mode simulation detaille des elus (19 sieges) avec les noms reels des listes
+- Mode partage colistiers: PIN de saisie (lecture seule sans PIN)
 - Historique recent des actions
 - Annulation de la derniere action
 - Remise a zero globale
@@ -33,14 +34,23 @@ http://localhost:3000
 ## API rapide
 
 - `GET /api/state` - etat courant
+- `GET /api/access` - indique si la saisie est protegee par PIN
+- `POST /api/access/verify` - verifie un PIN de saisie (`{ "pin": "1234" }`)
 - `GET /api/events` - flux temps reel (Server-Sent Events)
 - `POST /api/vote` - ajoute/retire une voix (`{ "listId": "liste-1", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
 - `POST /api/special-vote` - ajoute/retire un blanc ou nul (`{ "kind": "blank", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
 - `POST /api/config` - renomme les listes et met a jour les inscrits (`{ "names": ["Liste A", "Liste B"], "registeredVoters": 1200 }`)
+- `POST /api/set-totals` - saisie manuelle des totaux (`{ "listVotes": [100, 90], "blankVotes": 5, "nullVotes": 2 }`)
 - `POST /api/reset` - remet les compteurs a zero
 - `POST /api/undo` - annule la derniere action
+
+## Partage lecture seule / saisie
+
+- Configure un PIN serveur via la variable d'environnement `WRITE_PIN`.
+- Sans PIN, tout le monde peut saisir.
+- Avec PIN, les colistiers restent en lecture seule tant qu'ils ne deverrouillent pas la saisie.
 
 ## Deploiement Render (recommande pour URL publique)
 

@@ -53,6 +53,7 @@ const elements = {
   lists: document.getElementById("lists"),
   specialVotes: document.getElementById("special-votes"),
   lastUpdate: document.getElementById("last-update"),
+  liveModeBadge: document.getElementById("live-mode-badge"),
   totalBallots: document.getElementById("total-ballots"),
   expressedVotes: document.getElementById("expressed-votes"),
   registeredVotersDisplay: document.getElementById("registered-voters-display"),
@@ -685,6 +686,10 @@ function renderAccessControls() {
     elements.unlockButton.textContent = "Entrer en mode admin";
     elements.unlockButton.disabled = state.isAdminView;
     elements.lockButton.disabled = !state.isAdminView;
+    if (elements.liveModeBadge) {
+      elements.liveModeBadge.textContent = state.isAdminView ? "Mode admin local" : "Mode lecteur";
+      elements.liveModeBadge.className = state.isAdminView ? "mode-chip mode-admin" : "mode-chip mode-readonly";
+    }
     return;
   }
 
@@ -697,11 +702,19 @@ function renderAccessControls() {
     elements.accessModeBadge.className = "access-badge write";
     elements.accessHelp.textContent =
       "Mode admin actif sur cet appareil. Les autres appareils restent en lecture seule.";
+    if (elements.liveModeBadge) {
+      elements.liveModeBadge.textContent = "Mode admin (PIN)";
+      elements.liveModeBadge.className = "mode-chip mode-admin";
+    }
   } else {
     elements.accessModeBadge.textContent = "Lecture seule";
     elements.accessModeBadge.className = "access-badge readonly";
     elements.accessHelp.textContent =
       "Entre le PIN pour activer le mode admin sur cet appareil.";
+    if (elements.liveModeBadge) {
+      elements.liveModeBadge.textContent = "Mode lecteur (PIN actif)";
+      elements.liveModeBadge.className = "mode-chip mode-readonly";
+    }
   }
 }
 
@@ -831,7 +844,7 @@ function render() {
   }
   elements.leader.textContent = leaderLabel;
   if (elements.leaderCard) {
-    elements.leaderCard.className = `stat-card stat-winner ${winnerTone}`;
+    elements.leaderCard.className = `stat-card stat-winner stat-focus ${winnerTone}`;
   }
   let seatsLabel = "-";
   if (!state.hasTieForLead && state.leader && state.seatAllocation?.status === "ok") {
@@ -844,7 +857,7 @@ function render() {
     elements.winnerSeats.textContent = seatsLabel;
   }
   if (elements.winnerSeatsCard) {
-    elements.winnerSeatsCard.className = `stat-card stat-winner ${winnerTone}`;
+    elements.winnerSeatsCard.className = `stat-card stat-winner stat-focus ${winnerTone}`;
   }
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   setInputValueIfIdle(elements.name1, state.lists[0]?.name || "");

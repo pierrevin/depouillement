@@ -20,6 +20,7 @@
         <p class="subtitle">Comptage simple, instantane et partage en temps reel entre tous les appareils.</p>
         <div class="hero-meta">
           <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
+          <p id="live-mode-badge" class="mode-chip mode-readonly">Mode lecteur</p>
         </div>
       </header>
 
@@ -87,19 +88,21 @@
         <h2>Statistiques en direct</h2>
         <p class="section-subtitle">Les valeurs se mettent a jour en temps reel pour tous les observateurs.</p>
         <div id="bars" class="bars"></div>
-        <div class="stats-grid">
-          <article id="leader-card" class="stat-card stat-winner winner-none">
+        <div class="stats-focus-grid">
+          <article id="leader-card" class="stat-card stat-winner stat-focus winner-none">
             <h3>Tete</h3>
             <p id="leader" class="big">-</p>
           </article>
-          <article id="winner-seats-card" class="stat-card stat-winner winner-none">
+          <article id="winner-seats-card" class="stat-card stat-winner stat-focus winner-none">
             <h3>Nombre d'elus</h3>
             <p id="winner-seats" class="big">-</p>
           </article>
-          <article class="stat-card stat-neutral">
+          <article class="stat-card stat-neutral stat-focus">
             <h3>Ecart</h3>
             <p id="gap" class="big">0</p>
           </article>
+        </div>
+        <div class="stats-grid">
           <article class="stat-card stat-neutral">
             <h3>Inscrits</h3>
             <p id="registered-voters-display" class="big">0</p>

@@ -38,3 +38,21 @@ http://localhost:3000
 - `POST /api/config` - renomme les listes (`{ "names": ["Liste A", "Liste B"] }`)
 - `POST /api/reset` - remet les compteurs a zero
 - `POST /api/undo` - annule la derniere action
+
+## Deploiement Render (recommande pour URL publique)
+
+Le repo contient un `render.yaml` pour un deploiement rapide.
+
+### Methode rapide (Blueprint)
+
+1. Va sur Render > **New** > **Blueprint**
+2. Connecte ton repo GitHub
+3. Render detecte automatiquement `render.yaml`
+4. Clique **Apply**
+5. Une URL publique sera generee (ex: `https://...onrender.com`)
+
+### Points importants
+
+- L'application lit/stocke l'etat dans `data/state.json`.
+- Sur Render, ce stockage est adapte a un usage ponctuel, mais peut etre perdu en cas de redemarrage/redeploy.
+- Pour un usage recurrent, il faudra migrer vers une base persistante (ex: Postgres, Supabase, Redis, etc.).

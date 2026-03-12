@@ -367,7 +367,10 @@ function renderLists() {
       }">
         <span class="quick-title">${escapeHtml(list.name)}</span>
         <span class="quick-meta">
-          <span class="quick-count">${list.votes}</span>
+          <span class="quick-count-line">
+            <span class="quick-kpi-label">Voix</span>
+            <span class="quick-count">${list.votes}</span>
+          </span>
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
@@ -412,7 +415,10 @@ function renderSpecialVotes() {
       }">
         <span class="quick-title">${escapeHtml(item.label)}</span>
         <span class="quick-meta">
-          <span class="quick-count">${item.votes}</span>
+          <span class="quick-count-line">
+            <span class="quick-kpi-label">Voix</span>
+            <span class="quick-count">${item.votes}</span>
+          </span>
         </span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>

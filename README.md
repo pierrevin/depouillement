@@ -49,8 +49,9 @@ http://localhost:3000
 ## Partage lecture seule / saisie
 
 - Configure un PIN serveur via la variable d'environnement `WRITE_PIN`.
-- Sans PIN, tout le monde peut saisir.
-- Avec PIN, les colistiers restent en lecture seule tant qu'ils ne deverrouillent pas la saisie.
+- Les colistiers arrivent par defaut en mode lecteur.
+- Le mode admin (saisie) s'active depuis le bouton **Menu admin**.
+- Avec PIN, le mode admin demande un code avant de deverrouiller la saisie.
 
 ## Deploiement Render (recommande pour URL publique)
 

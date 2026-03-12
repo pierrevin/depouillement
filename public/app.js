@@ -6,6 +6,7 @@ const state = {
   participationPercent: null,
   writeProtectionEnabled: false,
   isWriteUnlocked: false,
+  isAdminView: false,
   blankVotes: 0,
   nullVotes: 0,
   gap: 0,
@@ -18,17 +19,21 @@ const state = {
 
 let resetArmTimeout = null;
 let isResetArmed = false;
+let isAdminDrawerOpen = false;
 let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const DEFAULT_TOTAL_SEATS = 19;
-const WRITE_PIN_STORAGE_KEY = "depouillement-write-pin";
+let currentWritePin = "";
 let isSimulationEnabled = false;
 const simulationVotesByList = {};
 
 const elements = {
   status: document.getElementById("status"),
-  accessPanel: document.getElementById("access-panel"),
+  adminMenuButton: document.getElementById("admin-menu-button"),
+  adminDrawer: document.getElementById("admin-drawer"),
+  adminCloseButton: document.getElementById("admin-close-button"),
+  adminOnlySections: document.querySelectorAll(".admin-only"),
   accessForm: document.getElementById("access-form"),
   accessPin: document.getElementById("access-pin"),
   accessHelp: document.getElementById("access-help"),
@@ -131,26 +136,21 @@ function sum(values) {
 }
 
 function canWrite() {
-  return !state.writeProtectionEnabled || state.isWriteUnlocked;
+  return state.isAdminView && (!state.writeProtectionEnabled || state.isWriteUnlocked);
 }
 
-function setStoredWritePin(pin) {
-  try {
-    if (pin) {
-      localStorage.setItem(WRITE_PIN_STORAGE_KEY, pin);
-    } else {
-      localStorage.removeItem(WRITE_PIN_STORAGE_KEY);
-    }
-  } catch {
-    // Ignore storage errors on restricted browsers.
-  }
+function setAdminDrawerOpen(open) {
+  isAdminDrawerOpen = open;
+  elements.adminDrawer.hidden = !open;
 }
 
-function getStoredWritePin() {
-  try {
-    return localStorage.getItem(WRITE_PIN_STORAGE_KEY) || "";
-  } catch {
-    return "";
+function setAdminView(active) {
+  state.isAdminView = active;
+  if (!active) {
+    state.isWriteUnlocked = false;
+    currentWritePin = "";
+  } else if (!state.writeProtectionEnabled) {
+    state.isWriteUnlocked = true;
   }
 }
 
@@ -661,30 +661,42 @@ function renderSimulationResult() {
 }
 
 function renderAccessControls() {
+  const menuLabel = state.isAdminView ? "Admin actif" : "Menu admin";
+  elements.adminMenuButton.textContent = menuLabel;
+  elements.adminMenuButton.classList.toggle("active", state.isAdminView);
+
+  elements.adminOnlySections.forEach((section) => {
+    section.hidden = !state.isAdminView;
+  });
+
   if (!state.writeProtectionEnabled) {
-    elements.accessModeBadge.textContent = "Saisie libre";
-    elements.accessModeBadge.className = "access-badge open";
+    elements.accessModeBadge.textContent = state.isAdminView ? "Admin local" : "Lecture seule";
+    elements.accessModeBadge.className = state.isAdminView
+      ? "access-badge open"
+      : "access-badge readonly";
     elements.accessHelp.textContent =
-      "Le PIN n'est pas configure sur le serveur. Tous les utilisateurs peuvent modifier les compteurs.";
+      "Aucun PIN serveur configure. Active le mode admin pour saisir, sinon lecture seule.";
     elements.accessPin.disabled = true;
-    elements.unlockButton.disabled = true;
-    elements.lockButton.disabled = true;
+    elements.unlockButton.textContent = "Entrer en mode admin";
+    elements.unlockButton.disabled = state.isAdminView;
+    elements.lockButton.disabled = !state.isAdminView;
     return;
   }
 
   elements.accessPin.disabled = false;
-  elements.unlockButton.disabled = false;
-  elements.lockButton.disabled = !state.isWriteUnlocked;
-  if (state.isWriteUnlocked) {
-    elements.accessModeBadge.textContent = "Saisie active";
+  elements.unlockButton.textContent = "Se connecter admin";
+  elements.unlockButton.disabled = state.isAdminView;
+  elements.lockButton.disabled = !state.isAdminView;
+  if (state.isWriteUnlocked && state.isAdminView) {
+    elements.accessModeBadge.textContent = "Admin connecte";
     elements.accessModeBadge.className = "access-badge write";
     elements.accessHelp.textContent =
-      "Saisie deverrouillee sur cet appareil. Les autres restent en lecture seule sans PIN.";
+      "Mode admin actif sur cet appareil. Les autres appareils restent en lecture seule.";
   } else {
     elements.accessModeBadge.textContent = "Lecture seule";
     elements.accessModeBadge.className = "access-badge readonly";
     elements.accessHelp.textContent =
-      "Entre le PIN pour autoriser la saisie sur cet appareil.";
+      "Entre le PIN pour activer le mode admin sur cet appareil.";
   }
 }
 
@@ -850,7 +862,7 @@ function mergeState(nextState) {
   state.participationPercent =
     typeof nextState.participationPercent === "number" ? nextState.participationPercent : null;
   state.writeProtectionEnabled = Boolean(nextState.writeProtectionEnabled);
-  if (!state.writeProtectionEnabled) {
+  if (!state.writeProtectionEnabled && state.isAdminView) {
     state.isWriteUnlocked = true;
   }
   state.blankVotes = nextState.blankVotes || 0;
@@ -872,9 +884,8 @@ function hapticFeedback() {
 
 async function callApi(endpoint, body = {}) {
   const headers = { "Content-Type": "application/json" };
-  const pin = getStoredWritePin();
-  if (pin) {
-    headers["X-Write-Pin"] = pin;
+  if (currentWritePin) {
+    headers["X-Write-Pin"] = currentWritePin;
   }
   const response = await fetch(endpoint, {
     method: "POST",
@@ -885,7 +896,7 @@ async function callApi(endpoint, body = {}) {
   const payload = await response.json();
   if (!response.ok) {
     if (response.status === 403) {
-      state.isWriteUnlocked = false;
+      setAdminView(false);
       render();
     }
     throw new Error(payload.error || "Erreur API");
@@ -911,31 +922,17 @@ async function initializeWriteAccess() {
   const payload = await response.json();
   state.writeProtectionEnabled = Boolean(payload.writeProtectionEnabled);
   if (!state.writeProtectionEnabled) {
-    state.isWriteUnlocked = true;
-    setStoredWritePin("");
+    state.isWriteUnlocked = false;
+    currentWritePin = "";
     return;
   }
-  const storedPin = getStoredWritePin();
-  if (!storedPin) {
-    state.isWriteUnlocked = false;
-    return;
-  }
-  try {
-    const verification = await verifyWritePin(storedPin);
-    state.isWriteUnlocked = Boolean(verification.ok);
-    if (!verification.ok) {
-      setStoredWritePin("");
-    }
-  } catch {
-    state.isWriteUnlocked = false;
-  }
+  state.isWriteUnlocked = false;
 }
 
 async function loadInitialState() {
   const headers = {};
-  const pin = getStoredWritePin();
-  if (pin) {
-    headers["X-Write-Pin"] = pin;
+  if (currentWritePin) {
+    headers["X-Write-Pin"] = currentWritePin;
   }
   const response = await fetch("/api/state", { headers });
   const payload = await response.json();
@@ -943,9 +940,23 @@ async function loadInitialState() {
 }
 
 function setupEvents() {
+  elements.adminMenuButton.addEventListener("click", () => {
+    setAdminDrawerOpen(!isAdminDrawerOpen);
+  });
+
+  elements.adminCloseButton.addEventListener("click", () => {
+    setAdminDrawerOpen(false);
+  });
+
   elements.accessForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.writeProtectionEnabled) return;
+    if (!state.writeProtectionEnabled) {
+      setAdminView(true);
+      setAdminDrawerOpen(false);
+      render();
+      return;
+    }
+
     const pin = elements.accessPin.value.trim();
     if (!pin) {
       alert("Entre le PIN pour deverrouiller la saisie.");
@@ -957,9 +968,11 @@ function setupEvents() {
         alert("PIN incorrect.");
         return;
       }
-      setStoredWritePin(pin);
+      currentWritePin = pin;
       state.isWriteUnlocked = true;
+      setAdminView(true);
       elements.accessPin.value = "";
+      setAdminDrawerOpen(false);
       render();
     } catch (error) {
       alert(error.message);
@@ -967,9 +980,9 @@ function setupEvents() {
   });
 
   elements.lockButton.addEventListener("click", () => {
-    setStoredWritePin("");
-    state.isWriteUnlocked = false;
+    setAdminView(false);
     elements.accessPin.value = "";
+    setAdminDrawerOpen(false);
     render();
   });
 
@@ -1123,6 +1136,7 @@ function setupRealtime() {
 async function boot() {
   setConfigCollapsed(loadConfigCollapsePreference());
   setSimulationEnabled(loadSimulationPreference());
+  setAdminDrawerOpen(false);
   await initializeWriteAccess();
   setupEvents();
   await loadInitialState();

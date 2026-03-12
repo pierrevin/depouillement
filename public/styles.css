@@ -69,6 +69,28 @@ body {
   gap: 0.8rem;
 }
 
+.hero-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-menu-button {
+  min-height: 34px;
+  padding: 0.36rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(188, 212, 248, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  color: #e8f1ff;
+  box-shadow: none;
+  font-size: 0.82rem;
+}
+
+.hero-menu-button.active {
+  background: rgba(230, 248, 237, 0.2);
+  border-color: rgba(178, 236, 198, 0.8);
+}
+
 .eyebrow {
   margin: 0;
   text-transform: uppercase;
@@ -159,12 +181,17 @@ body {
 .access-form {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: minmax(140px, 1fr) auto auto;
+  grid-template-columns: minmax(140px, 1fr) auto auto auto;
   align-items: end;
 }
 
 .access-pin-label {
   margin: 0;
+}
+
+.admin-drawer {
+  border: 1px solid #d6dfec;
+  background: #f9fbff;
 }
 
 .config-headline {

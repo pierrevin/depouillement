@@ -11,7 +11,10 @@
       <header class="hero panel">
         <div class="hero-top">
           <p class="eyebrow">Scrutin en direct</p>
-          <span id="status" class="status offline">Hors ligne</span>
+          <div class="hero-actions">
+            <span id="status" class="status offline">Hors ligne</span>
+            <button id="admin-menu-button" type="button" class="hero-menu-button">Menu admin</button>
+          </div>
         </div>
         <h1>Osons compter</h1>
         <p class="subtitle">Comptage simple, instantane et partage en temps reel entre tous les appareils.</p>
@@ -20,25 +23,26 @@
         </div>
       </header>
 
-      <section class="panel access-panel" id="access-panel">
+      <section class="panel admin-drawer" id="admin-drawer" hidden>
         <div class="access-headline">
-          <h2>Acces saisie</h2>
+          <h2>Menu admin</h2>
           <span id="access-mode-badge" class="access-badge">Lecture seule</span>
         </div>
         <p id="access-help" class="section-subtitle">
-          Partage l'URL a tous les colistiers. Seule la personne qui connait le PIN peut saisir.
+          Active le mode admin pour acceder a la saisie et aux outils avances.
         </p>
         <form id="access-form" class="access-form">
           <label class="access-pin-label">
             PIN de saisie
             <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" />
           </label>
-          <button id="unlock-button" type="submit">Deverrouiller</button>
-          <button id="lock-button" type="button" class="ghost">Verrouiller</button>
+          <button id="unlock-button" type="submit">Se connecter admin</button>
+          <button id="lock-button" type="button" class="ghost">Quitter admin</button>
+          <button id="admin-close-button" type="button" class="ghost">Fermer</button>
         </form>
       </section>
 
-      <section class="panel config-panel" id="config-panel">
+      <section class="panel config-panel admin-only" id="config-panel" hidden>
         <div class="config-headline">
           <h2>Configuration des 2 listes</h2>
           <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
@@ -133,7 +137,7 @@
         <div id="seats-table"></div>
       </section>
 
-      <section class="panel simulation-panel" id="simulation-panel">
+      <section class="panel simulation-panel admin-only" id="simulation-panel" hidden>
         <div class="simulation-headline">
           <h2>Mode simulation</h2>
           <button id="simulation-toggle" type="button" class="ghost compact-action">Activer</button>
@@ -161,7 +165,7 @@
         </div>
       </section>
 
-      <section class="panel actions-panel">
+      <section class="panel actions-panel admin-only" hidden>
         <h2>Corrections</h2>
         <div class="actions">
           <button id="undo-button" type="button">Annuler</button>
@@ -193,7 +197,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel admin-only" hidden>
         <h2>Historique recent</h2>
         <ul id="history" class="history"></ul>
       </section>

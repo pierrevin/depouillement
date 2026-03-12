@@ -675,8 +675,8 @@ function renderAccessControls() {
       ? "access-badge open"
       : "access-badge readonly";
     elements.accessHelp.textContent =
-      "Aucun PIN serveur configure. Active le mode admin pour saisir, sinon lecture seule.";
-    elements.accessPin.disabled = true;
+      "Aucun PIN serveur configure (WRITE_PIN absent). Le code n'est pas verifie, utilise simplement le mode admin.";
+    elements.accessPin.disabled = false;
     elements.unlockButton.textContent = "Entrer en mode admin";
     elements.unlockButton.disabled = state.isAdminView;
     elements.lockButton.disabled = !state.isAdminView;

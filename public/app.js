@@ -50,6 +50,8 @@ const elements = {
   simulationLabel2: document.getElementById("simulation-label-2"),
   simulationVotes1: document.getElementById("simulation-votes-1"),
   simulationVotes2: document.getElementById("simulation-votes-2"),
+  simulationPercent1: document.getElementById("simulation-percent-1"),
+  simulationPercent2: document.getElementById("simulation-percent-2"),
   simulationResult: document.getElementById("simulation-result"),
   history: document.getElementById("history"),
   resetHint: document.getElementById("reset-hint"),
@@ -435,6 +437,16 @@ function parseSimulationVotes() {
   ];
 }
 
+function updateSimulationPercentages(simulatedLists) {
+  if (!simulatedLists.length) return;
+  const totalSimulated = sum(simulatedLists.map((item) => item.votes));
+  const pct = (votes) => (totalSimulated > 0 ? (votes / totalSimulated) * 100 : 0);
+  const list1Percent = pct(simulatedLists[0].votes);
+  const list2Percent = pct(simulatedLists[1].votes);
+  elements.simulationPercent1.textContent = `${formatPercentage(list1Percent)} des exprimes simules`;
+  elements.simulationPercent2.textContent = `${formatPercentage(list2Percent)} des exprimes simules`;
+}
+
 function renderSimulationResult() {
   if (!isSimulationEnabled) {
     elements.simulationResult.innerHTML = "";
@@ -442,6 +454,7 @@ function renderSimulationResult() {
   }
 
   const simulatedLists = parseSimulationVotes();
+  updateSimulationPercentages(simulatedLists);
   const allocation = computeSeatAllocationDetailed(
     simulatedLists,
     Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS
@@ -455,7 +468,7 @@ function renderSimulationResult() {
 
   if (allocation.status === "tie_for_lead") {
     elements.simulationResult.innerHTML =
-      '<p class="seats-note">Egalite en tete dans la simulation: il faut un gagnant unique pour attribuer la prime de 11 sieges.</p>';
+      `<p class="seats-note">Egalite en tete dans la simulation: il faut un gagnant unique pour attribuer la prime de ${allocation.primeSeats} sieges.</p>`;
     return;
   }
 

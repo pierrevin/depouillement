@@ -491,6 +491,11 @@ button.danger {
   align-items: end;
 }
 
+.simulation-percent {
+  font-size: 0.8rem;
+  color: #60738a;
+}
+
 .simulation-step {
   border: 1px solid var(--line);
   border-radius: 12px;

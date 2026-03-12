@@ -26,7 +26,7 @@ const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const MANUAL_COLLAPSE_KEY = "depouillement-manual-collapsed";
 const DEFAULT_TOTAL_SEATS = 19;
-const CHARTER_COLORS = ["#0e7fad", "#ec654f"];
+const CHARTER_COLORS = ["#004a6d", "#fcc549"];
 let currentWritePin = "";
 let isSimulationEnabled = false;
 let isManualCollapsed = true;
@@ -909,8 +909,8 @@ function render() {
     state.lists[0]?.name || "Liste lagon"
   )} (bouton lagon)`;
   elements.configLabel2.innerHTML = `<span class="color-dot color-candidate-2"></span>${escapeHtml(
-    state.lists[1]?.name || "Liste corail"
-  )} (bouton corail)`;
+    state.lists[1]?.name || "Liste orange"
+  )} (bouton orange)`;
   const writable = canWrite();
   elements.name1.disabled = !writable;
   elements.name2.disabled = !writable;

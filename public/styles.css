@@ -330,11 +330,11 @@ label {
 }
 
 .color-dot.color-candidate-1 {
-  background: var(--brand);
+  background: var(--brand-dark);
 }
 
 .color-dot.color-candidate-2 {
-  background: var(--coral);
+  background: var(--sun);
 }
 
 input {
@@ -485,11 +485,21 @@ button.danger {
 }
 
 .quick-button.candidate-1 {
-  background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%);
+  background: linear-gradient(180deg, var(--brand-dark) 0%, #003a56 100%);
 }
 
 .quick-button.candidate-2 {
-  background: linear-gradient(180deg, var(--coral) 0%, #cf4d37 100%);
+  background: linear-gradient(180deg, var(--sun) 0%, #e2a31f 100%);
+  color: #4f3200;
+}
+
+.quick-button.candidate-2 .quick-percent {
+  color: rgba(79, 50, 0, 0.86);
+}
+
+.quick-button.candidate-2 .last-action-tag {
+  background: rgba(79, 50, 0, 0.14);
+  color: #4f3200;
 }
 
 .quick-button.blanc {
@@ -657,8 +667,8 @@ button.danger {
 }
 
 .stat-winner.winner-candidate-2 {
-  border-top-color: var(--coral);
-  background: linear-gradient(180deg, #fff4f1 0%, #ffeae4 100%);
+  border-top-color: #e2a31f;
+  background: linear-gradient(180deg, #fff9e9 0%, #fff2d0 100%);
 }
 
 .stat-winner.winner-none {

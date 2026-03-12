@@ -461,6 +461,31 @@ button.danger {
   border-top-width: 4px;
 }
 
+.stat-neutral {
+  border-top-color: #8a99ad;
+  background: #f7f9fc;
+}
+
+.stat-winner {
+  border-top-color: #8a99ad;
+  background: #f6f8fb;
+}
+
+.stat-winner.winner-candidate-1 {
+  border-top-color: #1f7adf;
+  background: linear-gradient(180deg, #eff6ff 0%, #e7f1ff 100%);
+}
+
+.stat-winner.winner-candidate-2 {
+  border-top-color: #da8a24;
+  background: linear-gradient(180deg, #fff7ec 0%, #fff2e2 100%);
+}
+
+.stat-winner.winner-none {
+  border-top-color: #8a99ad;
+  background: #f6f8fb;
+}
+
 .stats article h3 {
   margin: 0;
   color: var(--text-soft);
@@ -477,38 +502,6 @@ button.danger {
   margin: 0.2rem 0 0;
   color: #5d6e83;
   font-size: 0.78rem;
-}
-
-.accent-blue {
-  border-top-color: #2d7be3;
-}
-
-.accent-green {
-  border-top-color: #28a56c;
-}
-
-.accent-slate {
-  border-top-color: #6e7f93;
-}
-
-.accent-indigo {
-  border-top-color: #5a63d6;
-}
-
-.accent-teal {
-  border-top-color: #0f8a7b;
-}
-
-.accent-purple {
-  border-top-color: #7d3cb5;
-}
-
-.accent-orange {
-  border-top-color: #cb7e1d;
-}
-
-.accent-pink {
-  border-top-color: #be4297;
 }
 
 .bars {

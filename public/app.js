@@ -53,7 +53,10 @@ const elements = {
   participationDetail: document.getElementById("participation-detail"),
   blankVotes: document.getElementById("blank-votes"),
   nullVotes: document.getElementById("null-votes"),
+  leaderCard: document.getElementById("leader-card"),
   leader: document.getElementById("leader"),
+  winnerSeatsCard: document.getElementById("winner-seats-card"),
+  winnerSeats: document.getElementById("winner-seats"),
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
   seatsTitle: document.getElementById("seats-title"),
@@ -777,10 +780,32 @@ function render() {
   elements.nullVotes.textContent = String(state.nullVotes);
   elements.gap.textContent = String(state.gap);
   let leaderLabel = "-";
+  let winnerTone = "winner-none";
   if (state.expressedVotes > 0) {
     leaderLabel = state.hasTieForLead ? "Egalite" : state.leader?.name || "-";
+    if (!state.hasTieForLead && state.leader?.id === "liste-1") {
+      winnerTone = "winner-candidate-1";
+    } else if (!state.hasTieForLead && state.leader?.id === "liste-2") {
+      winnerTone = "winner-candidate-2";
+    }
   }
   elements.leader.textContent = leaderLabel;
+  if (elements.leaderCard) {
+    elements.leaderCard.className = `stat-card stat-winner ${winnerTone}`;
+  }
+  let seatsLabel = "-";
+  if (!state.hasTieForLead && state.leader && state.seatAllocation?.status === "ok") {
+    const winnerRow = state.seatAllocation.rows.find((row) => row.listId === state.leader.id);
+    if (winnerRow) {
+      seatsLabel = String(winnerRow.totalSeats);
+    }
+  }
+  if (elements.winnerSeats) {
+    elements.winnerSeats.textContent = seatsLabel;
+  }
+  if (elements.winnerSeatsCard) {
+    elements.winnerSeatsCard.className = `stat-card stat-winner ${winnerTone}`;
+  }
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   setInputValueIfIdle(elements.name1, state.lists[0]?.name || "");
   setInputValueIfIdle(elements.name2, state.lists[1]?.name || "");

@@ -582,22 +582,20 @@ button.danger {
 }
 
 .quick-meta {
-  display: grid;
-  gap: 0.06rem;
+  display: flex;
+  align-items: baseline;
 }
 
 .quick-count-line {
   display: flex;
   align-items: baseline;
-  gap: 0.36rem;
+  gap: 0.32rem;
 }
 
-.quick-kpi-label {
-  font-size: 0.64rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.78;
+.quick-unit {
+  font-size: 0.88rem;
+  font-weight: 600;
+  opacity: 0.88;
 }
 
 .quick-count {
@@ -608,9 +606,9 @@ button.danger {
 }
 
 .quick-percent {
-  font-size: 0.76rem;
-  opacity: 0.8;
-  font-weight: 600;
+  font-size: 0.88rem;
+  opacity: 1;
+  font-weight: 700;
 }
 
 .quick-button.soft .quick-count {

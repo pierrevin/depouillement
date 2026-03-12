@@ -9,8 +9,8 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 - Compteurs +1 / -1 pour les bulletins blancs et nuls
 - Actions rapides mobile: +1 par touche pour un depouillement simple et fiable
 - Statistiques instantanees: total bulletins, exprimes, blancs, nuls, pourcentage, tete, ecart
-- Calcul des elus sur 21 sieges (prime majoritaire + proportionnelle)
-- Mode simulation detaille des elus (21 sieges) avec les noms reels des listes
+- Calcul des elus sur 19 sieges (prime majoritaire + proportionnelle)
+- Mode simulation detaille des elus (19 sieges) avec les noms reels des listes
 - Historique recent des actions
 - Annulation de la derniere action
 - Remise a zero globale

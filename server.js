@@ -5,6 +5,8 @@ const { URL } = require("url");
 
 const HOST = "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
+const parsedTotalSeats = Number.parseInt(process.env.TOTAL_SEATS || "19", 10);
+const TOTAL_SEATS = Number.isInteger(parsedTotalSeats) && parsedTotalSeats > 0 ? parsedTotalSeats : 19;
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 
@@ -83,7 +85,7 @@ function saveState() {
 }
 
 function computeSeatAllocation({ lists, expressedVotes, leader, hasTieForLead }) {
-  const totalSeats = 21;
+  const totalSeats = TOTAL_SEATS;
   const primeSeats = Math.ceil(totalSeats / 2);
   const proportionalSeats = totalSeats - primeSeats;
   const thresholdPercent = 5;

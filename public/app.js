@@ -17,6 +17,7 @@ let isResetArmed = false;
 let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
+const DEFAULT_TOTAL_SEATS = 19;
 let isSimulationEnabled = false;
 const simulationVotesByList = {};
 
@@ -94,10 +95,11 @@ function sum(values) {
   return values.reduce((acc, value) => acc + value, 0);
 }
 
-function computeSeatAllocationDetailed(listsInput) {
+function computeSeatAllocationDetailed(listsInput, totalSeatsInput = DEFAULT_TOTAL_SEATS) {
   const lists = listsInput.map((list) => ({ ...list, votes: Math.max(0, Number(list.votes) || 0) }));
   const expressedVotes = sum(lists.map((list) => list.votes));
-  const totalSeats = 21;
+  const totalSeats =
+    Number.isInteger(totalSeatsInput) && totalSeatsInput > 0 ? totalSeatsInput : DEFAULT_TOTAL_SEATS;
   const primeSeats = Math.ceil(totalSeats / 2);
   const proportionalSeats = totalSeats - primeSeats;
   const thresholdPercent = 5;
@@ -320,7 +322,7 @@ function renderSeatAllocation() {
 
   if (allocation.status === "no_expressed_votes") {
     elements.seatsSummary.textContent =
-      "Ajoute des suffrages exprimes pour calculer la repartition des 21 sieges.";
+      `Ajoute des suffrages exprimes pour calculer la repartition des ${allocation.totalSeats} sieges.`;
     elements.seatsTable.innerHTML = '<p class="seats-note">Aucun siege ne peut etre calcule sans suffrage exprime.</p>';
     return;
   }
@@ -440,7 +442,10 @@ function renderSimulationResult() {
   }
 
   const simulatedLists = parseSimulationVotes();
-  const allocation = computeSeatAllocationDetailed(simulatedLists);
+  const allocation = computeSeatAllocationDetailed(
+    simulatedLists,
+    Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS
+  );
 
   if (allocation.status === "no_expressed_votes") {
     elements.simulationResult.innerHTML =

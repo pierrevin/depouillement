@@ -1,0 +1,12 @@
+{
+  "name": "depouillement-direct",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webapp legere de depouillement en direct",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

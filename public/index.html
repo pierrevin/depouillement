@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Osons Saint-Paul - Depouillement</title>
+    <meta name="theme-color" content="#004a6d" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero panel">
+        <div class="hero-top">
+          <div class="brand-lockup">
+            <img src="/logo-osons-saint-paul.svg" alt="Logo Osons Saint-Paul" class="brand-logo" />
+            <div>
+              <p class="eyebrow">Osons Saint-Paul</p>
+              <h1>Depouillement en direct</h1>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <span id="status" class="status offline">Hors ligne</span>
+            <button id="admin-menu-button" type="button" class="hero-menu-button">Menu admin</button>
+          </div>
+        </div>
+        <p class="subtitle">Comptage simple, instantane et partage en temps reel pour toute l'equipe.</p>
+        <div class="hero-meta">
+          <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
+          <p id="live-mode-badge" class="mode-chip mode-readonly">Mode lecteur</p>
+        </div>
+      </header>
+
+      <section class="panel admin-drawer" id="admin-drawer" hidden>
+        <div class="access-headline">
+          <h2>Menu admin</h2>
+          <span id="access-mode-badge" class="access-badge">Lecture seule</span>
+        </div>
+        <p id="access-help" class="section-subtitle">
+          Active le mode admin pour acceder a la saisie et aux outils avances.
+        </p>
+        <form id="access-form" class="access-form">
+          <label id="access-username-label" class="access-pin-label" hidden>
+            Identifiant admin
+            <input id="access-username" autocomplete="username" />
+          </label>
+          <label id="access-password-label" class="access-pin-label" hidden>
+            Mot de passe
+            <input id="access-password" type="password" autocomplete="current-password" />
+          </label>
+          <label id="access-pin-label" class="access-pin-label">
+            PIN de saisie
+            <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" />
+          </label>
+          <button id="unlock-button" type="submit">Se connecter admin</button>
+          <button id="lock-button" type="button" class="ghost">Quitter admin</button>
+          <button id="admin-close-button" type="button" class="ghost">Fermer</button>
+        </form>
+      </section>
+
+      <section class="panel config-panel admin-only" id="config-panel" hidden>
+        <div class="config-headline">
+          <h2>Configuration des 2 listes</h2>
+          <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
+        </div>
+        <div id="config-content" class="config-content">
+          <p class="section-subtitle">Renomme les listes et repere leur couleur de saisie.</p>
+          <form id="config-form" class="form-inline">
+            <label>
+              <span id="config-label-1" class="label-line"
+                ><span class="color-dot color-candidate-1"></span>Liste lagon</span
+              >
+              <input id="name-1" required maxlength="40" />
+            </label>
+            <label>
+              <span id="config-label-2" class="label-line"
+                ><span class="color-dot color-candidate-2"></span>Liste corail</span
+              >
+              <input id="name-2" required maxlength="40" />
+            </label>
+            <label>
+              <span class="label-line">Inscrits</span>
+              <input id="registered-voters" type="number" min="0" step="1" />
+            </label>
+            <button type="submit">Enregistrer</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel quick-panel">
+        <h2>Nombre de voix</h2>
+        <div class="quick-block">
+          <p class="quick-label">Candidats</p>
+          <div id="lists" class="quick-row"></div>
+        </div>
+        <div class="quick-block">
+          <p class="quick-label">Blancs et nuls</p>
+          <div id="special-votes" class="quick-row"></div>
+        </div>
+      </section>
+
+      <section class="panel stats">
+        <h2>Statistiques en direct</h2>
+        <p class="section-subtitle">Les valeurs se mettent a jour en temps reel pour tous les observateurs.</p>
+        <div id="bars" class="bars"></div>
+        <div class="stats-focus-grid">
+          <article id="leader-card" class="stat-card stat-winner stat-focus winner-none">
+            <h3>Tete</h3>
+            <p id="leader" class="big">-</p>
+          </article>
+          <article id="winner-seats-card" class="stat-card stat-winner stat-focus winner-none">
+            <h3>Nombre d'elus</h3>
+            <p id="winner-seats" class="big">-</p>
+          </article>
+          <article class="stat-card stat-neutral stat-focus">
+            <h3>Ecart</h3>
+            <p id="gap" class="big">0</p>
+          </article>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card stat-neutral">
+            <h3>Inscrits</h3>
+            <p id="registered-voters-display" class="big">0</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Total bulletins</h3>
+            <p id="total-ballots" class="big">0</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Participation</h3>
+            <p id="participation-rate" class="big">-</p>
+            <p id="participation-detail" class="mini">0 / 0</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Exprimes</h3>
+            <p id="expressed-votes" class="big">0</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Blancs</h3>
+            <p id="blank-votes" class="big">0</p>
+          </article>
+          <article class="stat-card stat-neutral">
+            <h3>Nuls</h3>
+            <p id="null-votes" class="big">0</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel seats-panel">
+        <h2 id="seats-title">Calcul des elus (19 sieges)</h2>
+        <p id="seats-summary" class="section-subtitle">Les sieges seront calcules automatiquement avec la prime majoritaire.</p>
+        <p id="seats-distribution-info" class="mini">Sieges a repartir: -</p>
+        <p id="seats-quotient-info" class="mini">QE: -</p>
+        <div id="seats-table"></div>
+      </section>
+
+      <section class="panel simulation-panel admin-only" id="simulation-panel" hidden>
+        <div class="simulation-headline">
+          <h2>Mode simulation</h2>
+          <button id="simulation-toggle" type="button" class="ghost compact-action">Activer</button>
+        </div>
+        <div id="simulation-content" class="simulation-content">
+          <p id="simulation-subtitle" class="section-subtitle">
+            Simule une repartition sur 19 sieges avec des voix exprimees fictives.
+          </p>
+          <p id="simulation-distribution-info" class="mini">Sieges a repartir en simulation: -</p>
+          <p id="simulation-quotient-info" class="mini">QE simulation: -</p>
+          <form id="simulation-form" class="simulation-form">
+            <label>
+              <span id="simulation-label-1">Liste lagon</span>
+              <input id="simulation-votes-1" type="number" min="0" step="1" />
+              <span id="simulation-percent-1" class="simulation-percent">0,0 % des exprimes simules</span>
+            </label>
+            <label>
+              <span id="simulation-label-2">Liste corail</span>
+              <input id="simulation-votes-2" type="number" min="0" step="1" />
+              <span id="simulation-percent-2" class="simulation-percent">0,0 % des exprimes simules</span>
+            </label>
+            <button type="submit">Recalculer</button>
+          </form>
+          <div id="simulation-result"></div>
+        </div>
+      </section>
+
+      <section class="panel actions-panel admin-only" hidden>
+        <h2>Corrections</h2>
+        <div class="actions">
+          <button id="reset-button" type="button" class="danger compact-reset">Remettre a 0</button>
+        </div>
+        <p id="reset-hint" class="reset-hint">Double appui sur "Remettre a 0" pour confirmer.</p>
+      </section>
+
+      <section class="panel admin-only" hidden>
+        <h2>Historique recent</h2>
+        <ul id="history" class="history"></ul>
+      </section>
+
+      <section class="panel admin-only manual-panel" hidden>
+        <div class="manual-edit collapsed" id="manual-edit">
+          <div class="manual-headline">
+            <h3>Saisie manuelle des totaux</h3>
+            <button id="manual-toggle" type="button" class="ghost compact-action">Afficher</button>
+          </div>
+          <div class="manual-content" id="manual-content">
+            <form id="manual-form" class="manual-form">
+              <label>
+                <span id="manual-label-1">Liste 1</span>
+                <input id="manual-votes-1" type="number" min="0" step="1" />
+              </label>
+              <label>
+                <span id="manual-label-2">Liste 2</span>
+                <input id="manual-votes-2" type="number" min="0" step="1" />
+              </label>
+              <label>
+                <span>Blancs</span>
+                <input id="manual-blank-votes" type="number" min="0" step="1" />
+              </label>
+              <label>
+                <span>Nuls</span>
+                <input id="manual-null-votes" type="number" min="0" step="1" />
+              </label>
+              <button id="manual-submit" type="submit">Appliquer les totaux</button>
+            </form>
+            <p class="mini">Utilise cette zone en correction ou pour saisir les totaux finaux.</p>
+          </div>
+        </div>
+      </section>
+
+      <button id="undo-button" type="button" class="undo-fab admin-only" hidden>Annuler</button>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>

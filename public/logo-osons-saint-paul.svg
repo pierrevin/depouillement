@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Logo Osons Saint-Paul</title>
+  <desc id="desc">Symbole circulaire multicolore avec vague et feuille.</desc>
+  <defs>
+    <clipPath id="circle-clip">
+      <circle cx="160" cy="140" r="120" />
+    </clipPath>
+  </defs>
+
+  <circle cx="160" cy="140" r="120" fill="#f5f5f5" />
+
+  <g clip-path="url(#circle-clip)">
+    <path d="M40 145c2-63 53-113 118-117 42-2 80 14 108 42l-28 36c-21-21-50-34-81-32-46 2-83 38-86 84z" fill="#ec654f" />
+    <path d="M238 106l28-36c25 24 40 57 40 94 0 9-1 17-3 25h-46c2-7 3-15 3-23 0-24-9-45-22-60z" fill="#fcc549" />
+    <path d="M300 189c-13 42-52 73-98 76-44 2-83-21-104-58l41-20c13 24 39 38 67 37 27-2 50-17 59-39z" fill="#65ae99" />
+    <path d="M19 188c6-23 19-43 37-57l18 42c-10 8-18 19-22 31z" fill="#4a9eb0" />
+    <path d="M40 173c27-1 50 14 66 34 20 24 47 38 80 39 33 1 67-12 102-31l25 38c-39 23-80 39-128 38-48-1-87-21-115-56-11-13-19-20-32-19z" fill="#0e7fad" />
+    <path d="M18 198c20-6 39-4 56 6 22 13 36 34 59 47 33 20 73 21 107 19 32-1 56 0 73 16l-27 27c-8-7-23-9-45-8-44 2-94 1-138-26-17-10-30-22-40-34-17-20-25-24-45-19z" fill="#004a6d" />
+    <path d="M104 186c8-15 23-24 39-24-1 16-10 30-24 39-8 5-17 8-26 8 1-8 4-15 11-23z" fill="#65ae99" />
+    <path d="M100 223c47 33 108 28 150 30 22 0 39 4 53 15l-6 9c-12-9-27-12-47-12-45-2-109 4-160-32z" fill="#ffffff" />
+  </g>
+</svg>

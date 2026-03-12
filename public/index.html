@@ -13,28 +13,32 @@
           <p class="eyebrow">Scrutin en direct</p>
           <span id="status" class="status offline">Hors ligne</span>
         </div>
-        <h1>Depouillement moderne et ultra rapide</h1>
+        <h1>Osons compter</h1>
         <p class="subtitle">Comptage simple, instantane et partage en temps reel entre tous les appareils.</p>
         <div class="hero-meta">
           <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
-          <p class="meta-line">UX pensee pour mobile et bureau.</p>
         </div>
       </header>
 
-      <section class="panel">
-        <h2>Configuration des 2 listes</h2>
-        <p class="section-subtitle">Renomme rapidement les listes avant ou pendant le depouillement.</p>
-        <form id="config-form" class="form-inline">
-          <label>
-            Liste 1
-            <input id="name-1" required maxlength="40" />
-          </label>
-          <label>
-            Liste 2
-            <input id="name-2" required maxlength="40" />
-          </label>
-          <button type="submit">Enregistrer</button>
-        </form>
+      <section class="panel config-panel" id="config-panel">
+        <div class="config-headline">
+          <h2>Configuration des 2 listes</h2>
+          <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
+        </div>
+        <div id="config-content" class="config-content">
+          <p class="section-subtitle">Renomme les listes et repere leur couleur de saisie.</p>
+          <form id="config-form" class="form-inline">
+            <label>
+              <span class="label-line"><span class="color-dot color-candidate-1"></span>Liste 1 (Bleu)</span>
+              <input id="name-1" required maxlength="40" />
+            </label>
+            <label>
+              <span class="label-line"><span class="color-dot color-candidate-2"></span>Liste 2 (Orange)</span>
+              <input id="name-2" required maxlength="40" />
+            </label>
+            <button type="submit">Enregistrer</button>
+          </form>
+        </div>
       </section>
 
       <section class="panel quick-panel">

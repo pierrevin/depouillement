@@ -88,7 +88,7 @@ body {
   margin-top: 0.8rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem 1rem;
+  gap: 0.5rem 1rem;
 }
 
 .meta-line {
@@ -122,11 +122,53 @@ body {
   align-items: end;
 }
 
+.config-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.config-content {
+  margin-top: 0.6rem;
+}
+
+.config-panel.collapsed .config-content {
+  display: none;
+}
+
+.compact-action {
+  min-height: 36px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
+}
+
 label {
   display: grid;
   gap: 0.36rem;
   font-weight: 600;
   color: #2e3a47;
+}
+
+.label-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.color-dot.color-candidate-1 {
+  background: #1f7adf;
+}
+
+.color-dot.color-candidate-2 {
+  background: #da8a24;
 }
 
 input {
@@ -464,9 +506,14 @@ button.compact-reset.armed {
 }
 
 .reset-hint {
-  margin: 0.45rem 0 0;
+  margin: 0.42rem 0 0;
   font-size: 0.78rem;
   color: #64748a;
+  display: none;
+}
+
+.reset-hint.visible {
+  display: block;
 }
 
 .history {

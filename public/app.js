@@ -12,9 +12,13 @@ const state = {
 
 let resetArmTimeout = null;
 let isResetArmed = false;
+let isConfigCollapsed = false;
+const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 
 const elements = {
   status: document.getElementById("status"),
+  configPanel: document.getElementById("config-panel"),
+  configToggle: document.getElementById("config-toggle"),
   configForm: document.getElementById("config-form"),
   name1: document.getElementById("name-1"),
   name2: document.getElementById("name-2"),
@@ -140,11 +144,32 @@ function renderSpecialVotes() {
     .join("");
 }
 
-function setResetHint(message) {
-  elements.resetHint.textContent = message;
+function setConfigCollapsed(collapsed) {
+  isConfigCollapsed = collapsed;
+  elements.configPanel.classList.toggle("collapsed", collapsed);
+  elements.configToggle.textContent = collapsed ? "Modifier" : "Replier";
+  try {
+    localStorage.setItem(CONFIG_COLLAPSE_KEY, collapsed ? "1" : "0");
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
 }
 
-function disarmResetButton(message = 'Double appui sur "Remettre a 0" pour confirmer.') {
+function loadConfigCollapsePreference() {
+  try {
+    const value = localStorage.getItem(CONFIG_COLLAPSE_KEY);
+    return value === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setResetHint(message = "") {
+  elements.resetHint.textContent = message;
+  elements.resetHint.classList.toggle("visible", Boolean(message));
+}
+
+function disarmResetButton(message = "") {
   isResetArmed = false;
   if (resetArmTimeout) {
     clearTimeout(resetArmTimeout);
@@ -186,7 +211,11 @@ function render() {
   elements.blankVotes.textContent = String(state.blankVotes);
   elements.nullVotes.textContent = String(state.nullVotes);
   elements.gap.textContent = String(state.gap);
-  elements.leader.textContent = state.leader ? state.leader.name : "-";
+  let leaderLabel = "-";
+  if (state.expressedVotes > 0) {
+    leaderLabel = state.gap === 0 ? "Egalite" : state.leader?.name || "-";
+  }
+  elements.leader.textContent = leaderLabel;
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   elements.name1.value = state.lists[0]?.name || "";
   elements.name2.value = state.lists[1]?.name || "";
@@ -195,8 +224,8 @@ function render() {
   elements.resetButton.disabled = !canReset;
   if (!canReset) {
     disarmResetButton("Remise a 0 indisponible: tous les compteurs sont deja a zero.");
-  } else if (!isResetArmed && elements.resetHint.textContent.includes("indisponible")) {
-    setResetHint('Double appui sur "Remettre a 0" pour confirmer.');
+  } else if (!isResetArmed) {
+    setResetHint("");
   }
 }
 
@@ -240,11 +269,16 @@ async function loadInitialState() {
 }
 
 function setupEvents() {
+  elements.configToggle.addEventListener("click", () => {
+    setConfigCollapsed(!isConfigCollapsed);
+  });
+
   elements.configForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
       const payload = await callApi("/api/config", { names: [elements.name1.value, elements.name2.value] });
       mergeState(payload);
+      setConfigCollapsed(true);
     } catch (error) {
       alert(error.message);
     }
@@ -329,6 +363,7 @@ function setupRealtime() {
 }
 
 async function boot() {
+  setConfigCollapsed(loadConfigCollapsePreference());
   setupEvents();
   await loadInitialState();
   setupRealtime();

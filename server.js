@@ -87,9 +87,11 @@ function computePublicState() {
   const nonExpressedVotes = state.blankVotes + state.nullVotes;
   const totalBallots = expressedVotes + nonExpressedVotes;
   const sorted = [...state.lists].sort((a, b) => b.votes - a.votes);
-  const leader = sorted[0];
+  const potentialLeader = sorted[0];
   const runnerUp = sorted[1];
-  const gap = leader ? leader.votes - (runnerUp ? runnerUp.votes : 0) : 0;
+  const gap = potentialLeader ? potentialLeader.votes - (runnerUp ? runnerUp.votes : 0) : 0;
+  const hasTieForLead = Boolean(runnerUp && potentialLeader && potentialLeader.votes === runnerUp.votes);
+  const leader = expressedVotes > 0 && !hasTieForLead ? potentialLeader : null;
 
   return {
     lists: state.lists.map((list) => ({

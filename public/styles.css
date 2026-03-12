@@ -15,6 +15,7 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --shadow-panel: 0 12px 35px -24px rgba(10, 22, 44, 0.38);
+  --shadow-soft: 0 8px 18px -16px rgba(10, 22, 44, 0.55);
 }
 
 * {
@@ -25,6 +26,9 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text-main);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   background:
     radial-gradient(circle at 12% -8%, #dde8ff 0%, transparent 45%),
     radial-gradient(circle at 95% 5%, #e4f2ff 0%, transparent 38%),
@@ -308,7 +312,12 @@ button {
   font-weight: 700;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
 }
 
 button:hover {
@@ -381,12 +390,17 @@ button.danger {
   box-shadow: 0 10px 20px -16px rgba(12, 36, 72, 0.8);
   display: grid;
   gap: 0.26rem;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .quick-button[aria-disabled="true"] {
   opacity: 1;
   cursor: default;
   pointer-events: none;
+}
+
+.quick-button:not([aria-disabled="true"]):active {
+  transform: translateY(1px) scale(0.995);
 }
 
 .quick-button.candidate-1 {
@@ -437,7 +451,7 @@ button.danger {
 }
 
 .quick-count {
-  font-size: 1.45rem;
+  font-size: clamp(1.3rem, 3.6vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1;
@@ -528,21 +542,27 @@ button.danger {
   margin-bottom: 0.7rem;
 }
 
+.stats-focus-grid + .stats-grid {
+  border-top: 1px solid #e6edf7;
+  padding-top: 0.78rem;
+}
+
 .stat-card {
   background: #f7faff;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 0.75rem;
   border-top-width: 4px;
+  transition: transform 0.16s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .stat-focus {
-  box-shadow: 0 8px 18px -16px rgba(10, 22, 44, 0.65);
+  box-shadow: var(--shadow-soft);
 }
 
 .stat-neutral {
-  border-top-color: #8a99ad;
-  background: #f7f9fc;
+  border-top-color: #97a5b8;
+  background: #f8fafe;
 }
 
 .stat-winner {
@@ -568,13 +588,14 @@ button.danger {
 .stats article h3 {
   margin: 0;
   color: var(--text-soft);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .big {
   margin: 0.25rem 0 0;
-  font-size: 1.7rem;
+  font-size: clamp(1.45rem, 3vw, 1.8rem);
   font-weight: 800;
+  line-height: 1.08;
 }
 
 .mini {
@@ -587,6 +608,10 @@ button.danger {
   margin: 0.95rem 0 0.75rem;
   display: grid;
   gap: 0.65rem;
+  border: 1px solid #e4eaf4;
+  border-radius: var(--radius-md);
+  background: #f9fbff;
+  padding: 0.7rem;
 }
 
 .stats {
@@ -692,15 +717,16 @@ button.danger {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin-bottom: 0.25rem;
+  color: #3c4b61;
 }
 
 .bar-track {
   background: #e4ebf5;
   border-radius: 999px;
   overflow: hidden;
-  height: 14px;
+  height: 12px;
 }
 
 .bar-fill {
@@ -875,6 +901,23 @@ button.compact-reset.armed {
 
   .reset-hint {
     font-size: 0.73rem;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stat-focus:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -18px rgba(10, 22, 44, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 

@@ -701,7 +701,7 @@ function renderAccessControls() {
     elements.accessModeBadge.textContent = "Admin connecte";
     elements.accessModeBadge.className = "access-badge write";
     elements.accessHelp.textContent =
-      "Mode admin actif sur cet appareil. Les autres appareils restent en lecture seule.";
+      "Mode admin actif sur cet appareil. La session reste ouverte apres rechargement.";
     if (elements.liveModeBadge) {
       elements.liveModeBadge.textContent = "Mode admin (PIN)";
       elements.liveModeBadge.className = "mode-chip mode-admin";
@@ -958,16 +958,27 @@ async function verifyWritePin(pin) {
   return payload;
 }
 
+async function logoutWriteAccess() {
+  const response = await fetch("/api/access/logout", {
+    method: "POST"
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || "Erreur de deconnexion admin");
+  }
+  return payload;
+}
+
 async function initializeWriteAccess() {
   const response = await fetch("/api/access");
   const payload = await response.json();
   state.writeProtectionEnabled = Boolean(payload.writeProtectionEnabled);
+  state.isWriteUnlocked = Boolean(payload.writeAuthorized);
   if (!state.writeProtectionEnabled) {
-    state.isWriteUnlocked = false;
     currentWritePin = "";
     return;
   }
-  state.isWriteUnlocked = false;
+  state.isAdminView = state.isWriteUnlocked;
 }
 
 async function loadInitialState() {
@@ -1009,9 +1020,9 @@ function setupEvents() {
         alert("PIN incorrect.");
         return;
       }
-      currentWritePin = pin;
-      state.isWriteUnlocked = true;
-      setAdminView(true);
+      currentWritePin = "";
+      state.isWriteUnlocked = Boolean(verification.writeAuthorized);
+      setAdminView(state.isWriteUnlocked);
       elements.accessPin.value = "";
       setAdminDrawerOpen(false);
       render();
@@ -1020,7 +1031,15 @@ function setupEvents() {
     }
   });
 
-  elements.lockButton.addEventListener("click", () => {
+  elements.lockButton.addEventListener("click", async () => {
+    if (state.writeProtectionEnabled) {
+      try {
+        await logoutWriteAccess();
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+    }
     setAdminView(false);
     elements.accessPin.value = "";
     setAdminDrawerOpen(false);

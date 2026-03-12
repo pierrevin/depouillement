@@ -1,6 +1,7 @@
 const fs = require("fs");
 const http = require("http");
 const path = require("path");
+const crypto = require("crypto");
 const { URL } = require("url");
 
 const HOST = "0.0.0.0";
@@ -9,6 +10,10 @@ const parsedTotalSeats = Number.parseInt(process.env.TOTAL_SEATS || "19", 10);
 const TOTAL_SEATS = Number.isInteger(parsedTotalSeats) && parsedTotalSeats > 0 ? parsedTotalSeats : 19;
 const WRITE_PIN = String(process.env.WRITE_PIN || "").trim();
 const WRITE_PROTECTION_ENABLED = WRITE_PIN.length > 0;
+const parsedSessionTtl = Number.parseInt(process.env.ADMIN_SESSION_TTL_SEC || "43200", 10);
+const ADMIN_SESSION_TTL_SEC =
+  Number.isInteger(parsedSessionTtl) && parsedSessionTtl > 0 ? parsedSessionTtl : 43200;
+const ADMIN_SESSION_COOKIE = "dep_admin_session";
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 
@@ -23,6 +28,7 @@ const MIME_TYPES = {
 };
 
 const clients = new Set();
+const adminSessions = new Map();
 
 function defaultState() {
   return {
@@ -265,14 +271,98 @@ function computePublicState() {
   };
 }
 
-function sendJson(res, statusCode, payload) {
+function sendJson(res, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(body),
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    ...extraHeaders
   });
   res.end(body);
+}
+
+function parseCookies(req) {
+  const raw = req.headers.cookie;
+  if (typeof raw !== "string" || !raw.trim()) {
+    return {};
+  }
+  return raw.split(";").reduce((cookies, item) => {
+    const [key, ...rest] = item.trim().split("=");
+    if (!key) {
+      return cookies;
+    }
+    cookies[key] = decodeURIComponent(rest.join("=") || "");
+    return cookies;
+  }, {});
+}
+
+function isHttpsRequest(req) {
+  const protoHeader = req.headers["x-forwarded-proto"];
+  if (typeof protoHeader === "string" && protoHeader.trim()) {
+    return protoHeader.split(",")[0].trim() === "https";
+  }
+  return Boolean(req.socket && req.socket.encrypted);
+}
+
+function cleanupExpiredAdminSessions(now = Date.now()) {
+  for (const [token, expiresAt] of adminSessions.entries()) {
+    if (!Number.isInteger(expiresAt) || expiresAt <= now) {
+      adminSessions.delete(token);
+    }
+  }
+}
+
+function getSessionTokenFromRequest(req) {
+  const cookies = parseCookies(req);
+  const token = cookies[ADMIN_SESSION_COOKIE];
+  return typeof token === "string" ? token : "";
+}
+
+function isAdminSessionValid(token) {
+  if (!token) {
+    return false;
+  }
+  cleanupExpiredAdminSessions();
+  const expiresAt = adminSessions.get(token);
+  if (!Number.isInteger(expiresAt)) {
+    return false;
+  }
+  if (expiresAt <= Date.now()) {
+    adminSessions.delete(token);
+    return false;
+  }
+  return true;
+}
+
+function createAdminSession() {
+  cleanupExpiredAdminSessions();
+  const token = crypto.randomBytes(24).toString("hex");
+  const expiresAt = Date.now() + ADMIN_SESSION_TTL_SEC * 1000;
+  adminSessions.set(token, expiresAt);
+  return token;
+}
+
+function buildSessionCookie(req, token) {
+  const parts = [
+    `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    "Path=/",
+    `Max-Age=${ADMIN_SESSION_TTL_SEC}`,
+    "HttpOnly",
+    "SameSite=Lax"
+  ];
+  if (isHttpsRequest(req)) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
+}
+
+function buildSessionClearCookie(req) {
+  const parts = [`${ADMIN_SESSION_COOKIE}=`, "Path=/", "Max-Age=0", "HttpOnly", "SameSite=Lax"];
+  if (isHttpsRequest(req)) {
+    parts.push("Secure");
+  }
+  return parts.join("; ");
 }
 
 function isWriteAuthorized(req) {
@@ -281,9 +371,14 @@ function isWriteAuthorized(req) {
   }
   const provided = req.headers["x-write-pin"];
   if (Array.isArray(provided)) {
-    return provided.includes(WRITE_PIN);
+    if (provided.includes(WRITE_PIN)) {
+      return true;
+    }
+  } else if (typeof provided === "string" && provided === WRITE_PIN) {
+    return true;
   }
-  return typeof provided === "string" && provided === WRITE_PIN;
+  const sessionToken = getSessionTokenFromRequest(req);
+  return isAdminSessionValid(sessionToken);
 }
 
 function ensureWriteAccess(req, res) {
@@ -369,7 +464,10 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/access") {
-    sendJson(res, 200, { writeProtectionEnabled: WRITE_PROTECTION_ENABLED });
+    sendJson(res, 200, {
+      writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+      writeAuthorized: isWriteAuthorized(req)
+    });
     return true;
   }
 
@@ -378,12 +476,56 @@ async function handleApi(req, res, url) {
       const body = await parseJsonBody(req);
       const providedPin = typeof body.pin === "string" ? body.pin.trim() : "";
       const ok = !WRITE_PROTECTION_ENABLED || providedPin === WRITE_PIN;
-      sendJson(res, 200, { ok, writeProtectionEnabled: WRITE_PROTECTION_ENABLED });
+      if (!ok) {
+        sendJson(res, 200, {
+          ok,
+          writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+          writeAuthorized: isWriteAuthorized(req)
+        });
+        return true;
+      }
+      if (!WRITE_PROTECTION_ENABLED) {
+        sendJson(res, 200, {
+          ok,
+          writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+          writeAuthorized: true
+        });
+        return true;
+      }
+      const token = createAdminSession();
+      sendJson(
+        res,
+        200,
+        {
+          ok,
+          writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+          writeAuthorized: true
+        },
+        { "Set-Cookie": buildSessionCookie(req, token) }
+      );
       return true;
     } catch (error) {
       sendJson(res, 400, { error: error.message });
       return true;
     }
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/access/logout") {
+    const token = getSessionTokenFromRequest(req);
+    if (token) {
+      adminSessions.delete(token);
+    }
+    sendJson(
+      res,
+      200,
+      {
+        ok: true,
+        writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
+        writeAuthorized: false
+      },
+      { "Set-Cookie": buildSessionClearCookie(req) }
+    );
+    return true;
   }
 
   if (req.method === "GET" && url.pathname === "/api/events") {

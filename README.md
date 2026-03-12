@@ -34,8 +34,9 @@ http://localhost:3000
 ## API rapide
 
 - `GET /api/state` - etat courant
-- `GET /api/access` - indique si la saisie est protegee par PIN
-- `POST /api/access/verify` - verifie un PIN de saisie (`{ "pin": "1234" }`)
+- `GET /api/access` - indique si la saisie est protegee par PIN et si la session admin est active
+- `POST /api/access/verify` - verifie un PIN de saisie et ouvre une session admin (`{ "pin": "1234" }`)
+- `POST /api/access/logout` - ferme la session admin en cours
 - `GET /api/events` - flux temps reel (Server-Sent Events)
 - `POST /api/vote` - ajoute/retire une voix (`{ "listId": "liste-1", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
@@ -52,6 +53,7 @@ http://localhost:3000
 - Les colistiers arrivent par defaut en mode lecteur.
 - Le mode admin (saisie) s'active depuis le bouton **Menu admin**.
 - Avec PIN, le mode admin demande un code avant de deverrouiller la saisie.
+- Une fois valide, la session admin est conservee apres rechargement (cookie HTTP-only).
 
 ## Deploiement Render (recommande pour URL publique)
 

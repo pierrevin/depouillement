@@ -699,10 +699,10 @@ function renderAccessControls() {
       ? "access-badge open"
       : "access-badge readonly";
     elements.accessHelp.textContent =
-      "Aucune protection serveur active. Active simplement le mode admin sur cet appareil.";
-    elements.accessPin.disabled = true;
-    if (elements.accessUsername) elements.accessUsername.disabled = true;
-    if (elements.accessPassword) elements.accessPassword.disabled = true;
+      "Aucune protection serveur active. Configure ADMIN_USERNAME et ADMIN_PASSWORD pour activer la connexion compte.";
+    elements.accessPin.disabled = false;
+    if (elements.accessUsername) elements.accessUsername.disabled = false;
+    if (elements.accessPassword) elements.accessPassword.disabled = false;
     elements.unlockButton.textContent = "Entrer en mode admin";
     elements.unlockButton.disabled = state.isAdminView;
     elements.lockButton.disabled = !state.isAdminView;
@@ -713,9 +713,9 @@ function renderAccessControls() {
     return;
   }
 
-  elements.accessPin.disabled = !isPinMode;
-  if (elements.accessUsername) elements.accessUsername.disabled = !isAccountMode;
-  if (elements.accessPassword) elements.accessPassword.disabled = !isAccountMode;
+  elements.accessPin.disabled = false;
+  if (elements.accessUsername) elements.accessUsername.disabled = false;
+  if (elements.accessPassword) elements.accessPassword.disabled = false;
   elements.unlockButton.textContent = isAccountMode ? "Connexion compte" : "Se connecter admin";
   elements.unlockButton.disabled = state.isAdminView;
   elements.lockButton.disabled = !state.isAdminView;
@@ -1010,7 +1010,13 @@ async function initializeWriteAccess() {
   const response = await fetch("/api/access");
   const payload = await response.json();
   state.writeProtectionEnabled = Boolean(payload.writeProtectionEnabled);
-  state.authMode = payload.authMode || (state.writeProtectionEnabled ? "pin" : "none");
+  const rawAuthMode = typeof payload.authMode === "string" ? payload.authMode.trim().toLowerCase() : "";
+  state.authMode =
+    rawAuthMode === "account" || rawAuthMode === "pin" || rawAuthMode === "none"
+      ? rawAuthMode
+      : state.writeProtectionEnabled
+        ? "pin"
+        : "none";
   state.isWriteUnlocked = Boolean(payload.writeAuthorized);
   if (!state.writeProtectionEnabled) {
     currentWritePin = "";

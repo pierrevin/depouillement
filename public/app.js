@@ -10,6 +10,9 @@ const state = {
   updatedAt: null
 };
 
+let resetArmTimeout = null;
+let isResetArmed = false;
+
 const elements = {
   status: document.getElementById("status"),
   configForm: document.getElementById("config-form"),
@@ -26,6 +29,7 @@ const elements = {
   gap: document.getElementById("gap"),
   bars: document.getElementById("bars"),
   history: document.getElementById("history"),
+  resetHint: document.getElementById("reset-hint"),
   resetButton: document.getElementById("reset-button"),
   undoButton: document.getElementById("undo-button")
 };
@@ -82,14 +86,14 @@ function historyLabel(entry) {
 function renderLists() {
   elements.lists.innerHTML = state.lists
     .map(
-      (list) => `
-      <button class="quick-button candidate" data-action="vote" data-list-id="${list.id}" data-delta="1">
+      (list, index) => `
+      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1">
         <span class="quick-title">${escapeHtml(list.name)}</span>
         <span class="quick-meta">
           <span class="quick-count">${list.votes}</span>
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
-        <span class="quick-cta">+1</span>
+        <span class="quick-cta">+1 voix</span>
       </button>
     `
     )
@@ -97,7 +101,7 @@ function renderLists() {
 }
 
 function renderBars() {
-  const colors = ["#1b74d4", "#22a561"];
+  const colors = ["#1b74d4", "#d5821a"];
   elements.bars.innerHTML = state.lists
     .map(
       (list, index) => `
@@ -124,16 +128,41 @@ function renderSpecialVotes() {
   elements.specialVotes.innerHTML = special
     .map(
       (item) => `
-      <button class="quick-button ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">
+      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">
         <span class="quick-title">${escapeHtml(item.label)}</span>
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>
         </span>
-        <span class="quick-cta">+1</span>
+        <span class="quick-cta">+1 bulletin</span>
       </button>
     `
     )
     .join("");
+}
+
+function setResetHint(message) {
+  elements.resetHint.textContent = message;
+}
+
+function disarmResetButton(message = 'Double appui sur "Remettre a 0" pour confirmer.') {
+  isResetArmed = false;
+  if (resetArmTimeout) {
+    clearTimeout(resetArmTimeout);
+    resetArmTimeout = null;
+  }
+  elements.resetButton.classList.remove("armed");
+  elements.resetButton.textContent = "Remettre a 0";
+  setResetHint(message);
+}
+
+function armResetButton() {
+  isResetArmed = true;
+  elements.resetButton.classList.add("armed");
+  elements.resetButton.textContent = "Confirmer 0";
+  setResetHint("Action sensible: appuie une 2e fois pour confirmer.");
+  resetArmTimeout = setTimeout(() => {
+    disarmResetButton();
+  }, 2500);
 }
 
 function renderHistory() {
@@ -162,6 +191,13 @@ function render() {
   elements.name1.value = state.lists[0]?.name || "";
   elements.name2.value = state.lists[1]?.name || "";
   elements.undoButton.disabled = state.history.length === 0;
+  const canReset = state.totalBallots > 0;
+  elements.resetButton.disabled = !canReset;
+  if (!canReset) {
+    disarmResetButton("Remise a 0 indisponible: tous les compteurs sont deja a zero.");
+  } else if (!isResetArmed && elements.resetHint.textContent.includes("indisponible")) {
+    setResetHint('Double appui sur "Remettre a 0" pour confirmer.');
+  }
 }
 
 function mergeState(nextState) {
@@ -243,13 +279,20 @@ function setupEvents() {
   });
 
   elements.resetButton.addEventListener("click", async () => {
-    const confirmed = window.confirm("Confirmer la remise a zero de tous les compteurs ?");
-    if (!confirmed) return;
+    if (elements.resetButton.disabled) return;
+    if (!isResetArmed) {
+      armResetButton();
+      hapticFeedback();
+      return;
+    }
     try {
       const payload = await callApi("/api/reset");
       mergeState(payload);
+      disarmResetButton("Compteurs remis a zero.");
+      hapticFeedback();
     } catch (error) {
       alert(error.message);
+      disarmResetButton();
     }
   });
 

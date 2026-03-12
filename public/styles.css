@@ -219,7 +219,7 @@ button.danger {
 }
 
 .quick-button {
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
   border-radius: 14px;
   text-align: left;
   padding: 0.72rem 0.74rem;
@@ -227,19 +227,43 @@ button.danger {
   color: #fff;
   box-shadow: 0 10px 20px -16px rgba(12, 36, 72, 0.8);
   display: grid;
-  gap: 0.22rem;
+  gap: 0.26rem;
 }
 
-.quick-button.candidate:nth-child(2) {
-  background: linear-gradient(180deg, #2a995a 0%, #1a7a46 100%);
+.quick-button.candidate-1 {
+  background: linear-gradient(180deg, #1f7adf 0%, #155fb7 100%);
+}
+
+.quick-button.candidate-2 {
+  background: linear-gradient(180deg, #da8a24 0%, #b56714 100%);
 }
 
 .quick-button.blanc {
-  background: linear-gradient(180deg, #0f8a7b 0%, #0a6a5f 100%);
+  background: linear-gradient(180deg, #f5f9ff 0%, #edf3fb 100%);
+  border-color: #d0dcec;
+  color: #2f445d;
+  box-shadow: none;
 }
 
 .quick-button.nul {
-  background: linear-gradient(180deg, #7d3cb5 0%, #622c91 100%);
+  background: linear-gradient(180deg, #f8f3ff 0%, #efe7fb 100%);
+  border-color: #dbcdf1;
+  color: #4a3d6e;
+  box-shadow: none;
+}
+
+.quick-button.soft .quick-cta {
+  background: rgba(28, 49, 75, 0.1);
+  border-radius: 999px;
+  width: fit-content;
+  padding: 0.18rem 0.46rem;
+  font-size: 0.75rem;
+  opacity: 1;
+}
+
+.quick-button.soft .quick-percent {
+  color: inherit;
+  opacity: 0.72;
 }
 
 .quick-title {
@@ -409,9 +433,40 @@ button.danger {
 }
 
 .actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.actions-panel {
+  padding: 0.72rem 0.82rem;
+}
+
+.actions-panel h2 {
+  font-size: 0.98rem;
+  margin-bottom: 0.55rem;
+}
+
+button.compact-reset {
+  min-height: 40px;
+  padding: 0.52rem 0.72rem;
+  border: 1px solid #e0b7b7;
+  background: #fff6f6;
+  color: #9f2d2d;
+  box-shadow: none;
+}
+
+button.compact-reset.armed {
+  background: #b93333;
+  color: #fff;
+  border-color: #b93333;
+}
+
+.reset-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: #64748a;
 }
 
 .history {
@@ -468,19 +523,22 @@ button.danger {
 
   .actions-panel {
     position: sticky;
-    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    bottom: max(0.35rem, env(safe-area-inset-bottom));
     z-index: 20;
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(6px);
   }
 
   .actions {
-    display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
   }
 
   .actions button {
-    min-height: 52px;
-    font-size: 1rem;
+    min-height: 42px;
+    font-size: 0.92rem;
+  }
+
+  .reset-hint {
+    font-size: 0.73rem;
   }
 }

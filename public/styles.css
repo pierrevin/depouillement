@@ -462,12 +462,6 @@ button.danger {
   white-space: nowrap;
 }
 
-.undo-inline.holding {
-  background: #dcefe9;
-  border-color: #97c8b7;
-  color: #0f5c46;
-}
-
 .quick-block {
   display: grid;
   gap: 0.55rem;

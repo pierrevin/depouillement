@@ -27,12 +27,9 @@ const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const MANUAL_COLLAPSE_KEY = "depouillement-manual-collapsed";
 const DEFAULT_TOTAL_SEATS = 19;
 const CHARTER_COLORS = ["#004a6d", "#fcc549"];
-const UNDO_HOLD_MS = 450;
 let currentWritePin = "";
 let isSimulationEnabled = false;
 let isManualCollapsed = true;
-let undoHoldTimeout = null;
-let isUndoHolding = false;
 const simulationVotesByList = {};
 
 const elements = {
@@ -859,24 +856,6 @@ function armResetButton() {
   }, 2500);
 }
 
-function setUndoButtonIdleLabel() {
-  if (elements.undoButton) {
-    elements.undoButton.textContent = "Annuler (maintenir)";
-  }
-}
-
-function clearUndoHoldState() {
-  if (undoHoldTimeout) {
-    clearTimeout(undoHoldTimeout);
-    undoHoldTimeout = null;
-  }
-  isUndoHolding = false;
-  if (elements.undoButton) {
-    elements.undoButton.classList.remove("holding");
-  }
-  setUndoButtonIdleLabel();
-}
-
 async function performUndo() {
   if (!canWrite()) return;
   try {
@@ -966,11 +945,7 @@ function render() {
   renderAccessControls();
   renderManualTotals();
   elements.undoButton.disabled = !writable || state.history.length === 0;
-  if (elements.undoButton.disabled || !writable) {
-    clearUndoHoldState();
-  } else if (!isUndoHolding) {
-    setUndoButtonIdleLabel();
-  }
+  elements.undoButton.textContent = "Annuler";
   const canReset = state.totalBallots > 0;
   elements.resetButton.disabled = !writable || !canReset;
   if (!canReset) {
@@ -1297,32 +1272,7 @@ function setupEvents() {
     }
   });
 
-  elements.undoButton.addEventListener("pointerdown", () => {
-    if (!canWrite() || elements.undoButton.disabled) return;
-    clearUndoHoldState();
-    isUndoHolding = true;
-    elements.undoButton.classList.add("holding");
-    elements.undoButton.textContent = "Relâcher pour annuler";
-    undoHoldTimeout = setTimeout(async () => {
-      undoHoldTimeout = null;
-      if (!isUndoHolding) return;
-      clearUndoHoldState();
-      await performUndo();
-    }, UNDO_HOLD_MS);
-  });
-
-  const cancelUndoHold = () => {
-    if (isUndoHolding) {
-      clearUndoHoldState();
-    }
-  };
-  elements.undoButton.addEventListener("pointerup", cancelUndoHold);
-  elements.undoButton.addEventListener("pointerleave", cancelUndoHold);
-  elements.undoButton.addEventListener("pointercancel", cancelUndoHold);
-
-  // Keep keyboard accessibility (Enter/Space triggers click with detail=0).
-  elements.undoButton.addEventListener("click", async (event) => {
-    if (event.detail !== 0) return;
+  elements.undoButton.addEventListener("click", async () => {
     if (!canWrite() || elements.undoButton.disabled) return;
     await performUndo();
   });

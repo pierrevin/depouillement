@@ -50,6 +50,7 @@ body {
 .panel {
   background: var(--card);
   border: 1px solid var(--line);
+  border-top: 4px solid #c6dbe4;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
   padding: var(--space-3);
@@ -69,6 +70,7 @@ body {
 .hero {
   color: #f8fdff;
   border: 0;
+  border-top: 0;
   background: linear-gradient(132deg, var(--brand-dark) 0%, var(--brand) 55%, var(--cyan) 100%);
   position: relative;
   overflow: hidden;
@@ -120,12 +122,89 @@ body {
 }
 
 .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.26);
   padding: 6px;
+}
+
+.brand-panel {
+  display: grid;
+  gap: 0.95rem;
+  border-top-color: var(--mint);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+}
+
+.brand-panel-visual {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-panel-logo {
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border: 1px solid #d4e2e8;
+  box-shadow: 0 8px 16px -12px rgba(0, 74, 109, 0.45);
+  padding: 8px;
+}
+
+.palette-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.palette-chip {
+  border: 1px solid #d0dfe6;
+  border-radius: 12px;
+  background: #ffffff;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.45rem;
+}
+
+.palette-swatch {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.palette-code {
+  font-size: 0.83rem;
+  color: #355c70;
+  font-weight: 600;
+}
+
+.palette-coral {
+  background: var(--coral);
+}
+
+.palette-sun {
+  background: var(--sun);
+}
+
+.palette-mint {
+  background: var(--mint);
+}
+
+.palette-brand {
+  background: var(--brand);
+}
+
+.palette-brand-dark {
+  background: var(--brand-dark);
+}
+
+.palette-cyan {
+  background: var(--cyan);
 }
 
 .hero-actions {
@@ -278,6 +357,7 @@ body {
 
 .admin-drawer {
   border: 1px solid #c8d9e0;
+  border-top-color: #b7cdd7;
   background: #f6fafb;
 }
 
@@ -414,6 +494,7 @@ button.danger {
 .quick-panel {
   display: grid;
   gap: 0.85rem;
+  border-top-color: var(--cyan);
 }
 
 .quick-block {
@@ -694,16 +775,19 @@ button.danger {
 .stats {
   display: grid;
   gap: 0.2rem;
+  border-top-color: var(--brand);
 }
 
 .seats-panel {
   display: grid;
   gap: 0.6rem;
+  border-top-color: var(--mint);
 }
 
 .simulation-panel {
   display: grid;
   gap: 0.6rem;
+  border-top-color: var(--sun);
 }
 
 .simulation-headline {
@@ -820,6 +904,7 @@ button.danger {
 
 .actions-panel {
   padding: 0.72rem 0.82rem;
+  border-top-color: var(--coral);
 }
 
 .actions-panel h2 {
@@ -844,6 +929,7 @@ button.danger {
 
 .manual-panel {
   padding-top: 0.8rem;
+  border-top-color: #c0d8e1;
 }
 
 .manual-panel .manual-edit {
@@ -944,6 +1030,24 @@ button.compact-reset.armed {
     font-size: 1.5rem;
   }
 
+  .brand-lockup {
+    align-items: flex-start;
+  }
+
+  .brand-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-panel-logo {
+    width: 78px;
+    height: 78px;
+  }
+
+  .palette-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .subtitle,
   .section-subtitle {
     font-size: 0.9rem;
@@ -1026,6 +1130,10 @@ button.compact-reset.armed {
 }
 
 @media (max-width: 420px) {
+  .brand-panel-visual {
+    align-items: flex-start;
+  }
+
   .stats-focus-grid,
   .stats-grid {
     grid-template-columns: 1fr;

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Osons Saint-Paul - Depouillement</title>
+    <title>Osons Saint-Paul - Dépouillement</title>
     <meta name="theme-color" content="#004a6d" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -23,9 +23,9 @@
             <button id="admin-menu-button" type="button" class="hero-menu-button">Menu admin</button>
           </div>
         </div>
-        <p class="subtitle">Comptage simple, instantane et partage en temps reel pour toute l'equipe.</p>
+        <p class="subtitle">Comptage simple, instantané et partagé en temps réel pour toute l'équipe.</p>
         <div class="hero-meta">
-          <p id="last-update" class="meta-line">Derniere mise a jour: -</p>
+          <p id="last-update" class="meta-line">Dernière mise à jour : -</p>
           <p id="live-mode-badge" class="mode-chip mode-readonly">Mode lecteur</p>
         </div>
       </header>
@@ -36,7 +36,7 @@
           <span id="access-mode-badge" class="access-badge">Lecture seule</span>
         </div>
         <p id="access-help" class="section-subtitle">
-          Active le mode admin pour acceder a la saisie et aux outils avances.
+          Active le mode admin pour accéder à la saisie et aux outils avancés.
         </p>
         <form id="access-form" class="access-form">
           <label id="access-username-label" class="access-pin-label" hidden>
@@ -63,17 +63,17 @@
           <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
         </div>
         <div id="config-content" class="config-content">
-          <p class="section-subtitle">Renomme les listes et repere leur couleur de saisie.</p>
+          <p class="section-subtitle">Renomme les listes et repère leur couleur de saisie.</p>
           <form id="config-form" class="form-inline">
             <label>
               <span id="config-label-1" class="label-line"
-                ><span class="color-dot color-candidate-1"></span>Liste lagon</span
+                ><span class="color-dot color-candidate-1"></span>J'aime St Paul - PEREZ</span
               >
               <input id="name-1" required maxlength="40" />
             </label>
             <label>
               <span id="config-label-2" class="label-line"
-                ><span class="color-dot color-candidate-2"></span>Liste orange</span
+                ><span class="color-dot color-candidate-2"></span>Osons St Paul - URBAN</span
               >
               <input id="name-2" required maxlength="40" />
             </label>
@@ -100,19 +100,19 @@
 
       <section class="panel stats">
         <h2>Statistiques en direct</h2>
-        <p class="section-subtitle">Les valeurs se mettent a jour en temps reel pour tous les observateurs.</p>
+        <p class="section-subtitle">Les valeurs se mettent à jour en temps réel pour tous les observateurs.</p>
         <div id="bars" class="bars"></div>
         <div class="stats-focus-grid">
           <article id="leader-card" class="stat-card stat-winner stat-focus winner-none">
-            <h3>Tete</h3>
+            <h3>Tête</h3>
             <p id="leader" class="big">-</p>
           </article>
           <article id="winner-seats-card" class="stat-card stat-winner stat-focus winner-none">
-            <h3>Nombre d'elus</h3>
+            <h3>Nombre d'élus</h3>
             <p id="winner-seats" class="big">-</p>
           </article>
           <article class="stat-card stat-neutral stat-focus">
-            <h3>Ecart</h3>
+            <h3>Écart</h3>
             <p id="gap" class="big">0</p>
           </article>
         </div>
@@ -131,7 +131,7 @@
             <p id="participation-detail" class="mini">0 / 0</p>
           </article>
           <article class="stat-card stat-neutral">
-            <h3>Exprimes</h3>
+            <h3>Exprimés</h3>
             <p id="expressed-votes" class="big">0</p>
           </article>
           <article class="stat-card stat-neutral">
@@ -146,34 +146,34 @@
       </section>
 
       <section class="panel seats-panel">
-        <h2 id="seats-title">Calcul des elus (19 sieges)</h2>
-        <p id="seats-summary" class="section-subtitle">Les sieges seront calcules automatiquement avec la prime majoritaire.</p>
-        <p id="seats-distribution-info" class="mini">Sieges a repartir: -</p>
+        <h2 id="seats-title">Calcul des élus (19 sièges)</h2>
+        <p id="seats-summary" class="section-subtitle">Les sièges seront calculés automatiquement avec la prime majoritaire.</p>
+        <p id="seats-distribution-info" class="mini">Sièges à répartir : -</p>
         <p id="seats-quotient-info" class="mini">QE: -</p>
         <div id="seats-table"></div>
       </section>
 
-      <section class="panel simulation-panel admin-only" id="simulation-panel" hidden>
+      <section class="panel simulation-panel admin-only write-only" id="simulation-panel" hidden>
         <div class="simulation-headline">
           <h2>Mode simulation</h2>
           <button id="simulation-toggle" type="button" class="ghost compact-action">Activer</button>
         </div>
         <div id="simulation-content" class="simulation-content">
           <p id="simulation-subtitle" class="section-subtitle">
-            Simule une repartition sur 19 sieges avec des voix exprimees fictives.
+            Simule une répartition sur 19 sièges avec des voix exprimées fictives.
           </p>
-          <p id="simulation-distribution-info" class="mini">Sieges a repartir en simulation: -</p>
+          <p id="simulation-distribution-info" class="mini">Sièges à répartir en simulation : -</p>
           <p id="simulation-quotient-info" class="mini">QE simulation: -</p>
           <form id="simulation-form" class="simulation-form">
             <label>
-              <span id="simulation-label-1">Liste lagon</span>
+              <span id="simulation-label-1">J'aime St Paul - PEREZ</span>
               <input id="simulation-votes-1" type="number" min="0" step="1" />
-              <span id="simulation-percent-1" class="simulation-percent">0,0 % des exprimes simules</span>
+              <span id="simulation-percent-1" class="simulation-percent">0,0 % des exprimés simulés</span>
             </label>
             <label>
-              <span id="simulation-label-2">Liste orange</span>
+              <span id="simulation-label-2">Osons St Paul - URBAN</span>
               <input id="simulation-votes-2" type="number" min="0" step="1" />
-              <span id="simulation-percent-2" class="simulation-percent">0,0 % des exprimes simules</span>
+              <span id="simulation-percent-2" class="simulation-percent">0,0 % des exprimés simulés</span>
             </label>
             <button type="submit">Recalculer</button>
           </form>
@@ -184,13 +184,13 @@
       <section class="panel actions-panel admin-only" hidden>
         <h2>Corrections</h2>
         <div class="actions">
-          <button id="reset-button" type="button" class="danger compact-reset">Remettre a 0</button>
+          <button id="reset-button" type="button" class="danger compact-reset">Remettre à 0</button>
         </div>
-        <p id="reset-hint" class="reset-hint">Double appui sur "Remettre a 0" pour confirmer.</p>
+        <p id="reset-hint" class="reset-hint">Double appui sur "Remettre à 0" pour confirmer.</p>
       </section>
 
       <section class="panel admin-only" hidden>
-        <h2>Historique recent</h2>
+        <h2>Historique récent</h2>
         <ul id="history" class="history"></ul>
       </section>
 

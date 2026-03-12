@@ -24,6 +24,8 @@ const ADMIN_SESSION_SECRET =
   crypto.createHash("sha256").update(`${WRITE_PIN}|${ADMIN_USERNAME}|${ADMIN_PASSWORD}`).digest("hex");
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
+const DEFAULT_LIST_NAMES = ["J'aime St Paul - PEREZ", "Osons St Paul - URBAN"];
+const LEGACY_LIST_NAMES = ["Liste 1", "Liste 2", "Liste lagon", "Liste orange", "Liste corail"];
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -40,8 +42,8 @@ const clients = new Set();
 function defaultState() {
   return {
     lists: [
-      { id: "liste-1", name: "Liste 1", votes: 0 },
-      { id: "liste-2", name: "Liste 2", votes: 0 }
+      { id: "liste-1", name: DEFAULT_LIST_NAMES[0], votes: 0 },
+      { id: "liste-2", name: DEFAULT_LIST_NAMES[1], votes: 0 }
     ],
     registeredVoters: 0,
     blankVotes: 0,
@@ -63,8 +65,11 @@ function normalizeState(rawState) {
 
   const lists = rawState.lists.map((list, index) => {
     const id = index === 0 ? "liste-1" : "liste-2";
-    const name =
-      typeof list.name === "string" && list.name.trim() ? list.name.trim() : `Liste ${index + 1}`;
+    const cleanedName = typeof list.name === "string" ? list.name.trim() : "";
+    const shouldUseDefault = !cleanedName || LEGACY_LIST_NAMES.includes(cleanedName);
+    const name = shouldUseDefault
+      ? DEFAULT_LIST_NAMES[index] || `Liste ${index + 1}`
+      : cleanedName.slice(0, 40);
     const votes = Number.isInteger(list.votes) && list.votes >= 0 ? list.votes : 0;
     return { id, name, votes };
   });
@@ -424,8 +429,8 @@ function ensureWriteAccess(req, res) {
   sendJson(res, 403, {
     error:
       AUTH_MODE === "account"
-        ? "Mode lecture seule: compte admin requis pour modifier le depouillement."
-        : "Mode lecture seule: PIN requis pour modifier le depouillement."
+        ? "Mode lecture seule : compte admin requis pour modifier le dépouillement."
+        : "Mode lecture seule : PIN requis pour modifier le dépouillement."
   });
   return false;
 }
@@ -513,7 +518,7 @@ async function handleApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/access/verify") {
     if (AUTH_MODE !== "pin") {
-      sendJson(res, 400, { error: "La verification PIN n'est pas active sur ce serveur." });
+      sendJson(res, 400, { error: "La vérification PIN n'est pas active sur ce serveur." });
       return true;
     }
     try {
@@ -623,7 +628,7 @@ async function handleApi(req, res, url) {
       if (body.registeredVoters !== undefined) {
         const parsed = Number(body.registeredVoters);
         if (!Number.isInteger(parsed) || parsed < 0) {
-          sendJson(res, 400, { error: "registeredVoters doit etre un entier superieur ou egal a 0." });
+          sendJson(res, 400, { error: "registeredVoters doit être un entier supérieur ou égal à 0." });
           return true;
         }
         registeredVoters = parsed;
@@ -710,11 +715,11 @@ async function handleApi(req, res, url) {
       }
 
       if (kind === "blank" && state.blankVotes + delta < 0) {
-        sendJson(res, 400, { error: "Le compteur blancs ne peut pas descendre sous 0." });
+        sendJson(res, 400, { error: "Le compteur Blancs ne peut pas descendre sous 0." });
         return true;
       }
       if (kind === "null" && state.nullVotes + delta < 0) {
-        sendJson(res, 400, { error: "Le compteur nuls ne peut pas descendre sous 0." });
+        sendJson(res, 400, { error: "Le compteur Nuls ne peut pas descendre sous 0." });
         return true;
       }
 
@@ -768,7 +773,7 @@ async function handleApi(req, res, url) {
     }
     const last = state.history.pop();
     if (!last) {
-      sendJson(res, 400, { error: "Aucune action a annuler." });
+        sendJson(res, 400, { error: "Aucune action à annuler." });
       return true;
     }
 
@@ -817,18 +822,18 @@ async function handleApi(req, res, url) {
 
       const parsedVotes = listVotes.map((value) => Number(value));
       if (!parsedVotes.every((value) => Number.isInteger(value) && value >= 0)) {
-        sendJson(res, 400, { error: "Les voix des listes doivent etre des entiers >= 0." });
+        sendJson(res, 400, { error: "Les voix des listes doivent être des entiers >= 0." });
         return true;
       }
 
       const blankVotes = Number(body.blankVotes);
       const nullVotes = Number(body.nullVotes);
       if (!Number.isInteger(blankVotes) || blankVotes < 0) {
-        sendJson(res, 400, { error: "blankVotes doit etre un entier >= 0." });
+        sendJson(res, 400, { error: "blankVotes doit être un entier >= 0." });
         return true;
       }
       if (!Number.isInteger(nullVotes) || nullVotes < 0) {
-        sendJson(res, 400, { error: "nullVotes doit etre un entier >= 0." });
+        sendJson(res, 400, { error: "nullVotes doit être un entier >= 0." });
         return true;
       }
 
@@ -865,14 +870,14 @@ function serveStatic(req, res, url) {
   const filePath = path.join(STATIC_DIR, normalizedPath);
 
   if (!filePath.startsWith(STATIC_DIR)) {
-    sendJson(res, 403, { error: "Forbidden" });
+    sendJson(res, 403, { error: "Accès interdit." });
     return;
   }
 
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === "ENOENT") {
-        sendJson(res, 404, { error: "Not Found" });
+        sendJson(res, 404, { error: "Ressource introuvable." });
         return;
       }
       sendJson(res, 500, { error: "Erreur serveur." });
@@ -894,12 +899,12 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname.startsWith("/api/")) {
       const handled = await handleApi(req, res, url);
       if (!handled) {
-        sendJson(res, 404, { error: "Endpoint inconnu." });
+        sendJson(res, 404, { error: "Point d'entrée inconnu." });
       }
       return;
     }
     if (req.method !== "GET") {
-      sendJson(res, 405, { error: "Method not allowed" });
+      sendJson(res, 405, { error: "Méthode non autorisée." });
       return;
     }
     serveStatic(req, res, url);
@@ -909,5 +914,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Serveur depouillement pret sur http://${HOST}:${PORT}`);
+  console.log(`Serveur dépouillement prêt sur http://${HOST}:${PORT}`);
 });

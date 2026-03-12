@@ -124,10 +124,10 @@ body {
 .brand-logo {
   width: 64px;
   height: 64px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  padding: 6px;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .hero-actions {

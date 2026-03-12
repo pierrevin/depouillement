@@ -325,10 +325,10 @@ function historyLabel(entry) {
     return `${formatDate(entry.at)} - ${entry.label} ${sign}`;
   }
   if (entry.type === "reset") {
-    return `${formatDate(entry.at)} - Remise a zero`;
+    return `${formatDate(entry.at)} - Remise à zéro`;
   }
   if (entry.type === "config") {
-    return `${formatDate(entry.at)} - Noms des listes modifies`;
+    return `${formatDate(entry.at)} - Noms des listes modifiés`;
   }
   if (entry.type === "set_totals") {
     return `${formatDate(entry.at)} - Totaux saisis manuellement`;
@@ -365,7 +365,7 @@ function renderLists() {
           <span class="quick-count">${list.votes}</span>
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
-        ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
+        ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
     })
@@ -409,7 +409,7 @@ function renderSpecialVotes() {
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>
         </span>
-        ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
+        ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
     })
@@ -419,15 +419,15 @@ function renderSpecialVotes() {
 function renderSeatAllocation() {
   const allocation = state.seatAllocation;
   if (!allocation) {
-    elements.seatsTitle.textContent = `Calcul des elus (${DEFAULT_TOTAL_SEATS} sieges)`;
+    elements.seatsTitle.textContent = `Calcul des élus (${DEFAULT_TOTAL_SEATS} sièges)`;
     elements.seatsSummary.textContent = "Calcul indisponible pour le moment.";
     elements.seatsDistributionInfo.textContent = "Sieges a repartir: -";
     elements.seatsQuotientInfo.textContent = "QE: -";
     elements.seatsTable.innerHTML = "";
     return;
   }
-  elements.seatsTitle.textContent = `Calcul des elus (${allocation.totalSeats} sieges)`;
-  elements.seatsDistributionInfo.textContent = `Sieges a repartir (proportionnelle): ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
+  elements.seatsTitle.textContent = `Calcul des élus (${allocation.totalSeats} sièges)`;
+  elements.seatsDistributionInfo.textContent = `Sièges à répartir (proportionnelle) : ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
 
   const quotientLabel = `QE: ${state.expressedVotes} / ${allocation.proportionalSeats} = ${formatDecimal(
     allocation.quotientElectoral,
@@ -437,15 +437,15 @@ function renderSeatAllocation() {
 
   if (allocation.status === "no_expressed_votes") {
     elements.seatsSummary.textContent =
-      `Ajoute des suffrages exprimes pour calculer la repartition des ${allocation.totalSeats} sieges.`;
-    elements.seatsTable.innerHTML = '<p class="seats-note">Aucun siege ne peut etre calcule sans suffrage exprime.</p>';
+      `Ajoute des suffrages exprimés pour calculer la répartition des ${allocation.totalSeats} sièges.`;
+    elements.seatsTable.innerHTML = '<p class="seats-note">Aucun siège ne peut être calculé sans suffrage exprimé.</p>';
     return;
   }
 
   if (allocation.status === "tie_for_lead") {
     elements.seatsSummary.textContent =
-      "Egalite en tete: il faut departager la liste en tete pour attribuer la prime majoritaire.";
-    elements.seatsTable.innerHTML = '<p class="seats-note">Le calcul des elus reste en attente d\'une tete de liste unique.</p>';
+      "Égalité en tête : il faut départager la liste en tête pour attribuer la prime majoritaire.";
+    elements.seatsTable.innerHTML = '<p class="seats-note">Le calcul des élus reste en attente d\'une tête de liste unique.</p>';
     return;
   }
 
@@ -455,7 +455,7 @@ function renderSeatAllocation() {
     return a.listName.localeCompare(b.listName);
   });
 
-  elements.seatsSummary.textContent = `Prime majoritaire: ${allocation.primeSeats} sieges pour ${allocation.leaderName}. Quotient electoral: ${allocation.quotientElectoral}.`;
+  elements.seatsSummary.textContent = `Prime majoritaire : ${allocation.primeSeats} sièges pour ${allocation.leaderName}. Quotient électoral : ${allocation.quotientElectoral}.`;
 
   elements.seatsTable.innerHTML = `
     <div class="table-wrap">
@@ -492,7 +492,7 @@ function renderSeatAllocation() {
 function setSimulationEnabled(enabled) {
   isSimulationEnabled = enabled;
   elements.simulationPanel.classList.toggle("enabled", enabled);
-  elements.simulationToggle.textContent = enabled ? "Desactiver" : "Activer";
+  elements.simulationToggle.textContent = enabled ? "Désactiver" : "Activer";
   try {
     localStorage.setItem(SIMULATION_COLLAPSE_KEY, enabled ? "1" : "0");
   } catch {
@@ -556,15 +556,15 @@ function updateSimulationPercentages(simulatedLists) {
   const pct = (votes) => (totalSimulated > 0 ? (votes / totalSimulated) * 100 : 0);
   const list1Percent = pct(simulatedLists[0].votes);
   const list2Percent = pct(simulatedLists[1].votes);
-  elements.simulationPercent1.textContent = `${formatPercentage(list1Percent)} des exprimes simules`;
-  elements.simulationPercent2.textContent = `${formatPercentage(list2Percent)} des exprimes simules`;
+  elements.simulationPercent1.textContent = `${formatPercentage(list1Percent)} des exprimés simulés`;
+  elements.simulationPercent2.textContent = `${formatPercentage(list2Percent)} des exprimés simulés`;
 }
 
 function renderSimulationResult() {
   const seatBase = Number(state.seatAllocation?.totalSeats) || DEFAULT_TOTAL_SEATS;
-  elements.simulationSubtitle.textContent = `Simule une repartition sur ${seatBase} sieges avec des voix exprimees fictives.`;
+  elements.simulationSubtitle.textContent = `Simule une répartition sur ${seatBase} sièges avec des voix exprimées fictives.`;
   if (!isSimulationEnabled) {
-    elements.simulationDistributionInfo.textContent = "Sieges a repartir en simulation: -";
+    elements.simulationDistributionInfo.textContent = "Sièges à répartir en simulation : -";
     elements.simulationQuotientInfo.textContent = "QE simulation: -";
     elements.simulationResult.innerHTML = "";
     return;
@@ -576,20 +576,20 @@ function renderSimulationResult() {
     simulatedLists,
     seatBase
   );
-  elements.simulationDistributionInfo.textContent = `Sieges a repartir en simulation: ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
+  elements.simulationDistributionInfo.textContent = `Sièges à répartir en simulation : ${allocation.totalSeats} - ${allocation.primeSeats} = ${allocation.proportionalSeats}`;
   elements.simulationQuotientInfo.textContent = `QE simulation: ${
     allocation.expressedVotes
   } / ${allocation.proportionalSeats} = ${formatDecimal(allocation.quotientElectoral, 2)}`;
 
   if (allocation.status === "no_expressed_votes") {
     elements.simulationResult.innerHTML =
-      '<p class="seats-note">Entre des voix exprimees pour lancer la simulation des elus.</p>';
+      '<p class="seats-note">Entre des voix exprimées pour lancer la simulation des élus.</p>';
     return;
   }
 
   if (allocation.status === "tie_for_lead") {
     elements.simulationResult.innerHTML =
-      `<p class="seats-note">Egalite en tete dans la simulation: il faut un gagnant unique pour attribuer la prime de ${allocation.primeSeats} sieges.</p>`;
+      `<p class="seats-note">Égalité en tête dans la simulation : il faut un gagnant unique pour attribuer la prime de ${allocation.primeSeats} sièges.</p>`;
     return;
   }
 
@@ -600,22 +600,22 @@ function renderSimulationResult() {
   elements.simulationResult.innerHTML = `
     <div class="simulation-step">
       <h3>1. Prime majoritaire</h3>
-      <p>La liste en tete (${escapeHtml(allocation.leaderName)}) recoit <strong>${allocation.primeSeats} sieges</strong>.</p>
+      <p>La liste en tête (${escapeHtml(allocation.leaderName)}) reçoit <strong>${allocation.primeSeats} sièges</strong>.</p>
     </div>
     <div class="simulation-step">
-      <h3>2. Sieges restant a repartir</h3>
-      <p>${allocation.totalSeats} - ${allocation.primeSeats} = <strong>${allocation.proportionalSeats} sieges</strong> en proportionnelle.</p>
+      <h3>2. Sièges restant à répartir</h3>
+      <p>${allocation.totalSeats} - ${allocation.primeSeats} = <strong>${allocation.proportionalSeats} sièges</strong> en proportionnelle.</p>
     </div>
     <div class="simulation-step">
-      <h3>3. Quotient electoral</h3>
-      <p>QE = suffrages exprimes / ${allocation.proportionalSeats} = ${allocation.expressedVotes} / ${allocation.proportionalSeats} = <strong>${formatDecimal(allocation.quotientElectoral, 2)}</strong></p>
+      <h3>3. Quotient électoral</h3>
+      <p>QE = suffrages exprimés / ${allocation.proportionalSeats} = ${allocation.expressedVotes} / ${allocation.proportionalSeats} = <strong>${formatDecimal(allocation.quotientElectoral, 2)}</strong></p>
     </div>
     <div class="simulation-step">
       <h3>4. Attribution initiale</h3>
       <div class="table-wrap">
         <table class="seats-table compact">
           <thead>
-            <tr><th>Liste</th><th>Voix</th><th>Sieges initiaux</th></tr>
+            <tr><th>Liste</th><th>Voix</th><th>Sièges initiaux</th></tr>
           </thead>
           <tbody>
             ${allocation.rows
@@ -632,7 +632,7 @@ function renderSimulationResult() {
           </tbody>
         </table>
       </div>
-      <p>Total initial: <strong>${initialAllocated}</strong> siege(s). Reste: <strong>${remainderSeats}</strong>.</p>
+      <p>Total initial : <strong>${initialAllocated}</strong> siège(s). Reste : <strong>${remainderSeats}</strong>.</p>
     </div>
     <div class="simulation-step">
       <h3>5. Plus forte moyenne</h3>
@@ -641,7 +641,7 @@ function renderSimulationResult() {
           ? `<div class="table-wrap">
               <table class="seats-table compact">
                 <thead>
-                  <tr><th>Tour</th><th>Moyennes</th><th>Siege attribue</th></tr>
+                  <tr><th>Tour</th><th>Moyennes</th><th>Siège attribué</th></tr>
                 </thead>
                 <tbody>
                   ${allocation.rounds
@@ -660,7 +660,7 @@ function renderSimulationResult() {
                 </tbody>
               </table>
             </div>`
-          : '<p class="seats-note">Aucun tour supplementaire necessaire.</p>'
+          : '<p class="seats-note">Aucun tour supplémentaire nécessaire.</p>'
       }
     </div>
     <div class="simulation-step">
@@ -698,6 +698,9 @@ function renderAccessControls() {
   elements.adminOnlySections.forEach((section) => {
     section.hidden = !state.isAdminView;
   });
+  if (elements.simulationPanel) {
+    elements.simulationPanel.hidden = !canWrite();
+  }
 
   const isAccountMode = state.authMode === "account";
   const isPinMode = state.authMode === "pin";
@@ -717,7 +720,7 @@ function renderAccessControls() {
       ? "access-badge open"
       : "access-badge readonly";
     elements.accessHelp.textContent =
-      "Aucune protection serveur active. Configure ADMIN_USERNAME et ADMIN_PASSWORD pour activer la connexion compte.";
+      "Aucune protection serveur active. Configure ADMIN_USERNAME et ADMIN_PASSWORD pour activer la connexion par compte.";
     elements.accessPin.disabled = false;
     if (elements.accessUsername) elements.accessUsername.disabled = false;
     if (elements.accessPassword) elements.accessPassword.disabled = false;
@@ -738,16 +741,16 @@ function renderAccessControls() {
   elements.unlockButton.disabled = state.isAdminView;
   elements.lockButton.disabled = !state.isAdminView;
   if (state.isWriteUnlocked && state.isAdminView) {
-    elements.accessModeBadge.textContent = "Admin connecte";
+    elements.accessModeBadge.textContent = "Admin connecté";
     elements.accessModeBadge.className = "access-badge write";
     elements.accessHelp.textContent =
-      "Mode admin actif sur cet appareil. La session reste ouverte apres rechargement.";
+      "Mode admin actif sur cet appareil. La session reste ouverte après rechargement.";
     if (elements.liveModeBadge) {
       elements.liveModeBadge.textContent = isAccountMode ? "Mode admin (compte)" : "Mode admin (PIN)";
       elements.liveModeBadge.className = "mode-chip mode-admin";
     }
   } else {
-    elements.accessModeBadge.textContent = "Lecture seule";
+      elements.accessModeBadge.textContent = "Lecture seule";
     elements.accessModeBadge.className = "access-badge readonly";
     elements.accessHelp.textContent =
       isAccountMode
@@ -834,7 +837,7 @@ function disarmResetButton(message = "") {
     resetArmTimeout = null;
   }
   elements.resetButton.classList.remove("armed");
-  elements.resetButton.textContent = "Remettre a 0";
+  elements.resetButton.textContent = "Remettre à 0";
   setResetHint(message);
 }
 
@@ -842,7 +845,7 @@ function armResetButton() {
   isResetArmed = true;
   elements.resetButton.classList.add("armed");
   elements.resetButton.textContent = "Confirmer 0";
-  setResetHint("Action sensible: appuie une 2e fois pour confirmer.");
+  setResetHint("Action sensible : appuie une 2e fois pour confirmer.");
   resetArmTimeout = setTimeout(() => {
     disarmResetButton();
   }, 2500);
@@ -877,7 +880,7 @@ function render() {
   let leaderLabel = "-";
   let winnerTone = "winner-none";
   if (state.expressedVotes > 0) {
-    leaderLabel = state.hasTieForLead ? "Egalite" : state.leader?.name || "-";
+    leaderLabel = state.hasTieForLead ? "Égalité" : state.leader?.name || "-";
     if (!state.hasTieForLead && state.leader?.id === "liste-1") {
       winnerTone = "winner-candidate-1";
     } else if (!state.hasTieForLead && state.leader?.id === "liste-2") {
@@ -901,15 +904,15 @@ function render() {
   if (elements.winnerSeatsCard) {
     elements.winnerSeatsCard.className = `stat-card stat-winner stat-focus ${winnerTone}`;
   }
-  elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
+  elements.lastUpdate.textContent = `Dernière mise à jour : ${formatDateTime(state.updatedAt)}`;
   setInputValueIfIdle(elements.name1, state.lists[0]?.name || "");
   setInputValueIfIdle(elements.name2, state.lists[1]?.name || "");
   setInputValueIfIdle(elements.registeredVotersInput, state.registeredVoters);
   elements.configLabel1.innerHTML = `<span class="color-dot color-candidate-1"></span>${escapeHtml(
-    state.lists[0]?.name || "Liste lagon"
-  )} (bouton lagon)`;
+    state.lists[0]?.name || "J'aime St Paul - PEREZ"
+  )} (bouton bleu foncé)`;
   elements.configLabel2.innerHTML = `<span class="color-dot color-candidate-2"></span>${escapeHtml(
-    state.lists[1]?.name || "Liste orange"
+    state.lists[1]?.name || "Osons St Paul - URBAN"
   )} (bouton orange)`;
   const writable = canWrite();
   elements.name1.disabled = !writable;
@@ -929,7 +932,7 @@ function render() {
   const canReset = state.totalBallots > 0;
   elements.resetButton.disabled = !writable || !canReset;
   if (!canReset) {
-    disarmResetButton("Remise a 0 indisponible: tous les compteurs sont deja a zero.");
+    disarmResetButton("Remise à 0 indisponible : tous les compteurs sont déjà à zéro.");
   } else if (!isResetArmed && writable) {
     setResetHint("");
   } else if (!writable) {
@@ -995,7 +998,7 @@ async function verifyWritePin(pin) {
   });
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload.error || "Erreur de verification du PIN");
+    throw new Error(payload.error || "Erreur de vérification du PIN");
   }
   return payload;
 }
@@ -1019,7 +1022,7 @@ async function logoutWriteAccess() {
   });
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error(payload.error || "Erreur de deconnexion admin");
+    throw new Error(payload.error || "Erreur de déconnexion admin");
   }
   return payload;
 }
@@ -1100,7 +1103,7 @@ function setupEvents() {
 
     const pin = elements.accessPin.value.trim();
     if (!pin) {
-      alert("Entre le PIN pour deverrouiller la saisie.");
+      alert("Entre le PIN pour déverrouiller la saisie.");
       return;
     }
     try {
@@ -1172,7 +1175,7 @@ function setupEvents() {
   elements.configForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!canWrite()) {
-      alert("Mode lecture seule: deverrouille d'abord la saisie.");
+      alert("Mode lecture seule : déverrouille d'abord la saisie.");
       return;
     }
     try {
@@ -1232,7 +1235,7 @@ function setupEvents() {
     try {
       const payload = await callApi("/api/reset");
       mergeState(payload);
-      disarmResetButton("Compteurs remis a zero.");
+      disarmResetButton("Compteurs remis à zéro.");
       hapticFeedback();
     } catch (error) {
       alert(error.message);
@@ -1253,7 +1256,7 @@ function setupEvents() {
   elements.manualForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!canWrite()) {
-      alert("Mode lecture seule: deverrouille d'abord la saisie.");
+      alert("Mode lecture seule : déverrouille d'abord la saisie.");
       return;
     }
     const listVotes = [
@@ -1276,7 +1279,7 @@ function setupEvents() {
 function setupRealtime() {
   const events = new EventSource("/api/events");
   events.onopen = () => {
-    elements.status.textContent = "Connecte en direct";
+    elements.status.textContent = "Connecté en direct";
     elements.status.classList.remove("offline");
     elements.status.classList.add("online");
   };

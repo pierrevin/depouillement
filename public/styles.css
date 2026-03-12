@@ -122,12 +122,16 @@ body {
 }
 
 .brand-logo {
-  width: 64px;
-  height: 64px;
+  display: block;
+  height: 72px;
+  width: auto;
+  max-width: 38vw;
   border-radius: 0;
   background: transparent;
   border: 0;
   padding: 0;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .hero-actions {
@@ -968,8 +972,9 @@ button.compact-reset.armed {
   }
 
   .brand-logo {
-    width: 56px;
-    height: 56px;
+    height: 58px;
+    width: auto;
+    max-width: 46vw;
   }
 
   .subtitle,

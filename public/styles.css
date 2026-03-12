@@ -208,24 +208,6 @@ body {
   border-color: rgba(186, 227, 213, 0.95);
 }
 
-.status {
-  width: fit-content;
-  border-radius: 999px;
-  padding: 0.35rem 0.72rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.status.online {
-  background: #dcefe9;
-  color: #0f5c46;
-}
-
-.status.offline {
-  background: #ffe8e2;
-  color: #9c3e2d;
-}
-
 .form-inline {
   display: grid;
   gap: 0.8rem;

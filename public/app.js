@@ -1279,14 +1279,18 @@ function setupEvents() {
 function setupRealtime() {
   const events = new EventSource("/api/events");
   events.onopen = () => {
-    elements.status.textContent = "Connecté en direct";
-    elements.status.classList.remove("offline");
-    elements.status.classList.add("online");
+    if (elements.status) {
+      elements.status.textContent = "Connecté en direct";
+      elements.status.classList.remove("offline");
+      elements.status.classList.add("online");
+    }
   };
   events.onerror = () => {
-    elements.status.textContent = "Connexion en cours...";
-    elements.status.classList.remove("online");
-    elements.status.classList.add("offline");
+    if (elements.status) {
+      elements.status.textContent = "Connexion en cours...";
+      elements.status.classList.remove("online");
+      elements.status.classList.add("offline");
+    }
   };
   events.onmessage = (event) => {
     try {
@@ -1310,7 +1314,9 @@ async function boot() {
 }
 
 boot().catch((error) => {
-  elements.status.textContent = `Erreur: ${error.message}`;
-  elements.status.classList.remove("online");
-  elements.status.classList.add("offline");
+  if (elements.status) {
+    elements.status.textContent = `Erreur: ${error.message}`;
+    elements.status.classList.remove("online");
+    elements.status.classList.add("offline");
+  }
 });

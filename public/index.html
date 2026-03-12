@@ -53,35 +53,6 @@
         </form>
       </section>
 
-      <section class="panel config-panel admin-only" id="config-panel" hidden>
-        <div class="config-headline">
-          <h2>Configuration des 2 listes</h2>
-          <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
-        </div>
-        <div id="config-content" class="config-content">
-          <p class="section-subtitle">Renomme les listes et repère leur couleur de saisie.</p>
-          <form id="config-form" class="form-inline">
-            <label>
-              <span id="config-label-1" class="label-line"
-                ><span class="color-dot color-candidate-1"></span>J'aime St Paul - PEREZ</span
-              >
-              <input id="name-1" required maxlength="40" />
-            </label>
-            <label>
-              <span id="config-label-2" class="label-line"
-                ><span class="color-dot color-candidate-2"></span>Osons St Paul - URBAN</span
-              >
-              <input id="name-2" required maxlength="40" />
-            </label>
-            <label>
-              <span class="label-line">Inscrits</span>
-              <input id="registered-voters" type="number" min="0" step="1" />
-            </label>
-            <button type="submit">Enregistrer</button>
-          </form>
-        </div>
-      </section>
-
       <section class="panel quick-panel">
         <div class="quick-panel-head">
           <h2>Nombre de voix</h2>
@@ -221,6 +192,35 @@
             </form>
             <p class="mini">Utilise cette zone en correction ou pour saisir les totaux finaux.</p>
           </div>
+        </div>
+      </section>
+
+      <section class="panel config-panel admin-only" id="config-panel" hidden>
+        <div class="config-headline">
+          <h2>Configuration des 2 listes</h2>
+          <button id="config-toggle" type="button" class="ghost compact-action">Replier</button>
+        </div>
+        <div id="config-content" class="config-content">
+          <p class="section-subtitle">Renomme les listes et repère leur couleur de saisie.</p>
+          <form id="config-form" class="form-inline">
+            <label>
+              <span id="config-label-1" class="label-line"
+                ><span class="color-dot color-candidate-1"></span>J'aime St Paul - PEREZ</span
+              >
+              <input id="name-1" required maxlength="40" />
+            </label>
+            <label>
+              <span id="config-label-2" class="label-line"
+                ><span class="color-dot color-candidate-2"></span>Osons St Paul - URBAN</span
+              >
+              <input id="name-2" required maxlength="40" />
+            </label>
+            <label>
+              <span class="label-line">Inscrits</span>
+              <input id="registered-voters" type="number" min="0" step="1" />
+            </label>
+            <button type="submit">Enregistrer</button>
+          </form>
         </div>
       </section>
 

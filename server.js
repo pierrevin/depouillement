@@ -25,6 +25,7 @@ const ADMIN_SESSION_SECRET =
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 const DEFAULT_LIST_NAMES = ["J'aime St Paul - PEREZ", "Osons St Paul - URBAN"];
+const DEFAULT_REGISTERED_VOTERS = 1153;
 const LEGACY_LIST_NAMES = ["Liste 1", "Liste 2", "Liste lagon", "Liste orange", "Liste corail"];
 
 const MIME_TYPES = {
@@ -45,7 +46,7 @@ function defaultState() {
       { id: "liste-1", name: DEFAULT_LIST_NAMES[0], votes: 0 },
       { id: "liste-2", name: DEFAULT_LIST_NAMES[1], votes: 0 }
     ],
-    registeredVoters: 0,
+    registeredVoters: DEFAULT_REGISTERED_VOTERS,
     blankVotes: 0,
     nullVotes: 0,
     history: [],
@@ -77,9 +78,9 @@ function normalizeState(rawState) {
   return {
     lists,
     registeredVoters:
-      Number.isInteger(rawState.registeredVoters) && rawState.registeredVoters >= 0
+      Number.isInteger(rawState.registeredVoters) && rawState.registeredVoters > 0
         ? rawState.registeredVoters
-        : 0,
+        : DEFAULT_REGISTERED_VOTERS,
     blankVotes:
       Number.isInteger(rawState.blankVotes) && rawState.blankVotes >= 0 ? rawState.blankVotes : 0,
     nullVotes:

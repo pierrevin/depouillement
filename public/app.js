@@ -328,9 +328,9 @@ function renderLists() {
   elements.lists.innerHTML = state.lists
     .map(
       (list, index) => `
-      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1" ${
-        writable ? "" : "disabled"
-      }>
+      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1" aria-disabled="${
+        writable ? "false" : "true"
+      }">
         <span class="quick-title">${escapeHtml(list.name)}</span>
         <span class="quick-meta">
           <span class="quick-count">${list.votes}</span>
@@ -372,9 +372,9 @@ function renderSpecialVotes() {
   elements.specialVotes.innerHTML = special
     .map(
       (item) => `
-      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" ${
-        writable ? "" : "disabled"
-      }>
+      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" aria-disabled="${
+        writable ? "false" : "true"
+      }">
         <span class="quick-title">${escapeHtml(item.label)}</span>
         <span class="quick-meta">
           <span class="quick-count">${item.votes}</span>

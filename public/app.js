@@ -335,12 +335,28 @@ function historyLabel(entry) {
   return `${formatDate(entry.at)} - Action`;
 }
 
+function getLastActionMarker() {
+  const latest = state.history[0];
+  if (!latest || typeof latest !== "object") {
+    return null;
+  }
+  if (latest.type === "vote" && typeof latest.listId === "string") {
+    return { type: "vote", listId: latest.listId };
+  }
+  if (latest.type === "special_vote" && (latest.kind === "blank" || latest.kind === "null")) {
+    return { type: "special_vote", kind: latest.kind };
+  }
+  return null;
+}
+
 function renderLists() {
   const writable = canWrite();
+  const lastMarker = getLastActionMarker();
   elements.lists.innerHTML = state.lists
-    .map(
-      (list, index) => `
-      <button class="quick-button candidate candidate-${index + 1}" data-action="vote" data-list-id="${list.id}" data-delta="1" aria-disabled="${
+    .map((list, index) => {
+      const isLastAction = lastMarker?.type === "vote" && lastMarker.listId === list.id;
+      return `
+      <button class="quick-button candidate candidate-${index + 1} ${isLastAction ? "is-last-action" : ""}" data-action="vote" data-list-id="${list.id}" data-delta="1" aria-disabled="${
         writable ? "false" : "true"
       }">
         <span class="quick-title">${escapeHtml(list.name)}</span>
@@ -349,9 +365,10 @@ function renderLists() {
           <span class="quick-percent">${formatPercentage(list.percentage)}</span>
         </span>
         <span class="quick-cta">+1 voix</span>
+        ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
       </button>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
@@ -376,15 +393,17 @@ function renderBars() {
 
 function renderSpecialVotes() {
   const writable = canWrite();
+  const lastMarker = getLastActionMarker();
   const special = [
     { kind: "blank", label: "Blancs", votes: state.blankVotes, className: "blanc" },
     { kind: "null", label: "Nuls", votes: state.nullVotes, className: "nul" }
   ];
 
   elements.specialVotes.innerHTML = special
-    .map(
-      (item) => `
-      <button class="quick-button soft ${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" aria-disabled="${
+    .map((item) => {
+      const isLastAction = lastMarker?.type === "special_vote" && lastMarker.kind === item.kind;
+      return `
+      <button class="quick-button soft ${item.className} ${isLastAction ? "is-last-action" : ""}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" aria-disabled="${
         writable ? "false" : "true"
       }">
         <span class="quick-title">${escapeHtml(item.label)}</span>
@@ -392,9 +411,10 @@ function renderSpecialVotes() {
           <span class="quick-count">${item.votes}</span>
         </span>
         <span class="quick-cta">+1 bulletin</span>
+        ${isLastAction ? '<span class="last-action-tag">Derniere action</span>' : ""}
       </button>
-    `
-    )
+    `;
+    })
     .join("");
 }
 

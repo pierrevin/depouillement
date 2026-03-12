@@ -399,6 +399,29 @@ button.danger {
   pointer-events: none;
 }
 
+.quick-button.is-last-action {
+  border-color: rgba(13, 40, 79, 0.42);
+  box-shadow:
+    0 0 0 2px rgba(20, 77, 148, 0.24),
+    0 12px 22px -16px rgba(12, 36, 72, 0.85);
+}
+
+.last-action-tag {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.13rem 0.42rem;
+  font-size: 0.69rem;
+  font-weight: 700;
+  background: rgba(23, 44, 72, 0.18);
+  color: inherit;
+}
+
+.quick-button.soft.is-last-action {
+  box-shadow:
+    0 0 0 2px rgba(87, 104, 126, 0.2),
+    0 8px 14px -16px rgba(19, 34, 57, 0.42);
+}
+
 .quick-button:not([aria-disabled="true"]):active {
   transform: translateY(1px) scale(0.995);
 }
@@ -736,7 +759,7 @@ button.danger {
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: 0.6rem;
   align-items: center;
 }
@@ -748,6 +771,29 @@ button.danger {
 .actions-panel h2 {
   font-size: 0.98rem;
   margin-bottom: 0.55rem;
+}
+
+.undo-fab {
+  position: fixed;
+  right: max(0.8rem, env(safe-area-inset-right));
+  bottom: max(0.8rem, env(safe-area-inset-bottom));
+  z-index: 35;
+  min-height: 38px;
+  padding: 0.42rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid #d2ddec;
+  background: rgba(255, 255, 255, 0.92);
+  color: #2b3c54;
+  box-shadow: 0 9px 16px -14px rgba(9, 21, 40, 0.75);
+  font-size: 0.83rem;
+}
+
+.manual-panel {
+  padding-top: 0.8rem;
+}
+
+.manual-panel .manual-edit {
+  margin-top: 0;
 }
 
 .manual-edit {
@@ -883,20 +929,24 @@ button.compact-reset.armed {
   }
 
   .actions-panel {
-    position: sticky;
-    bottom: max(0.35rem, env(safe-area-inset-bottom));
-    z-index: 20;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(6px);
+    position: static;
   }
 
   .actions {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
   }
 
   .actions button {
     min-height: 42px;
     font-size: 0.92rem;
+  }
+
+  .undo-fab {
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    right: max(0.55rem, env(safe-area-inset-right));
+    min-height: 34px;
+    padding: 0.36rem 0.62rem;
+    font-size: 0.79rem;
   }
 
   .reset-hint {

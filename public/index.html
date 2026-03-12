@@ -178,10 +178,17 @@
       <section class="panel actions-panel admin-only" hidden>
         <h2>Corrections</h2>
         <div class="actions">
-          <button id="undo-button" type="button">Annuler</button>
           <button id="reset-button" type="button" class="danger compact-reset">Remettre a 0</button>
         </div>
         <p id="reset-hint" class="reset-hint">Double appui sur "Remettre a 0" pour confirmer.</p>
+      </section>
+
+      <section class="panel admin-only" hidden>
+        <h2>Historique recent</h2>
+        <ul id="history" class="history"></ul>
+      </section>
+
+      <section class="panel admin-only manual-panel" hidden>
         <div class="manual-edit collapsed" id="manual-edit">
           <div class="manual-headline">
             <h3>Saisie manuelle des totaux</h3>
@@ -212,10 +219,7 @@
         </div>
       </section>
 
-      <section class="panel admin-only" hidden>
-        <h2>Historique recent</h2>
-        <ul id="history" class="history"></ul>
-      </section>
+      <button id="undo-button" type="button" class="undo-fab admin-only" hidden>Annuler</button>
     </main>
 
     <script src="/app.js"></script>

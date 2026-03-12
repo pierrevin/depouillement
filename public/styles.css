@@ -153,6 +153,8 @@ button {
   padding: 0.72rem 1rem;
   min-height: 44px;
   font-weight: 700;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
@@ -226,6 +228,24 @@ button.danger {
 
 .vote-actions button {
   flex: 1;
+}
+
+.vote-actions-mobile button {
+  min-height: 62px;
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.vote-actions-secondary button {
+  min-height: 48px;
+}
+
+.plus-one {
+  background: linear-gradient(180deg, #1e76db 0%, #135eb8 100%);
+}
+
+.plus-five {
+  background: linear-gradient(180deg, #20a76f 0%, #118558 100%);
 }
 
 .vote-actions button.blanc {
@@ -354,5 +374,29 @@ button.danger {
   .subtitle,
   .section-subtitle {
     font-size: 0.9rem;
+  }
+
+  .lists,
+  .special-votes,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-panel {
+    position: sticky;
+    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(6px);
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .actions button {
+    min-height: 52px;
+    font-size: 1rem;
   }
 }

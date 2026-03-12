@@ -63,11 +63,11 @@ function escapeHtml(value) {
 function historyLabel(entry) {
   if (!entry) return "";
   if (entry.type === "vote") {
-    const sign = entry.delta > 0 ? "+1" : "-1";
+    const sign = entry.delta > 0 ? `+${entry.delta}` : String(entry.delta);
     return `${formatDate(entry.at)} - ${entry.listName} ${sign}`;
   }
   if (entry.type === "special_vote") {
-    const sign = entry.delta > 0 ? "+1" : "-1";
+    const sign = entry.delta > 0 ? `+${entry.delta}` : String(entry.delta);
     return `${formatDate(entry.at)} - ${entry.label} ${sign}`;
   }
   if (entry.type === "reset") {
@@ -87,11 +87,17 @@ function renderLists() {
         <h3>${escapeHtml(list.name)}</h3>
         <p class="votes">${list.votes}</p>
         <p class="percent">${formatPercentage(list.percentage)}</p>
-        <div class="vote-actions">
+        <div class="vote-actions vote-actions-mobile">
+          <button class="plus-one" data-action="vote" data-list-id="${list.id}" data-delta="1">+1</button>
+          <button class="plus-five" data-action="vote" data-list-id="${list.id}" data-delta="5">+5</button>
+        </div>
+        <div class="vote-actions vote-actions-secondary">
           <button class="ghost" data-action="vote" data-list-id="${list.id}" data-delta="-1" ${
-            list.votes === 0 ? "disabled" : ""
-          }>-1</button>
-          <button data-action="vote" data-list-id="${list.id}" data-delta="1">+1</button>
+            list.votes < 1 ? "disabled" : ""
+          }>-1 Corriger</button>
+          <button class="ghost" data-action="vote" data-list-id="${list.id}" data-delta="-5" ${
+            list.votes < 5 ? "disabled" : ""
+          }>-5 Corriger lot</button>
         </div>
       </article>
     `
@@ -130,11 +136,17 @@ function renderSpecialVotes() {
       <article class="card">
         <h3>${escapeHtml(item.label)}</h3>
         <p class="votes">${item.votes}</p>
-        <div class="vote-actions">
+        <div class="vote-actions vote-actions-mobile">
+          <button class="${item.className} plus-one" data-action="special-vote" data-kind="${item.kind}" data-delta="1">+1</button>
+          <button class="${item.className} plus-five" data-action="special-vote" data-kind="${item.kind}" data-delta="5">+5</button>
+        </div>
+        <div class="vote-actions vote-actions-secondary">
           <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-1" ${
-            item.votes === 0 ? "disabled" : ""
-          }>-1</button>
-          <button class="${item.className}" data-action="special-vote" data-kind="${item.kind}" data-delta="1">+1</button>
+            item.votes < 1 ? "disabled" : ""
+          }>-1 Corriger</button>
+          <button class="ghost" data-action="special-vote" data-kind="${item.kind}" data-delta="-5" ${
+            item.votes < 5 ? "disabled" : ""
+          }>-5 Corriger lot</button>
         </div>
       </article>
     `
@@ -183,6 +195,12 @@ function mergeState(nextState) {
   render();
 }
 
+function hapticFeedback() {
+  if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+    navigator.vibrate(12);
+  }
+}
+
 async function callApi(endpoint, body = {}) {
   const response = await fetch(endpoint, {
     method: "POST",
@@ -222,6 +240,7 @@ function setupEvents() {
     try {
       const payload = await callApi("/api/vote", { listId, delta });
       mergeState(payload);
+      hapticFeedback();
     } catch (error) {
       alert(error.message);
     }
@@ -235,6 +254,7 @@ function setupEvents() {
     try {
       const payload = await callApi("/api/special-vote", { kind, delta });
       mergeState(payload);
+      hapticFeedback();
     } catch (error) {
       alert(error.message);
     }

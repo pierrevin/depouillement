@@ -235,8 +235,8 @@ async function handleApi(req, res, url) {
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
-      if (![1, -1].includes(delta)) {
-        sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
+      if (![1, -1, 5, -5].includes(delta)) {
+        sendJson(res, 400, { error: "delta doit valoir 1, -1, 5 ou -5." });
         return true;
       }
       const list = state.lists.find((item) => item.id === body.listId);
@@ -244,7 +244,7 @@ async function handleApi(req, res, url) {
         sendJson(res, 404, { error: "Liste introuvable." });
         return true;
       }
-      if (delta < 0 && list.votes === 0) {
+      if (list.votes + delta < 0) {
         sendJson(res, 400, { error: "Le compteur ne peut pas descendre sous 0." });
         return true;
       }
@@ -273,8 +273,8 @@ async function handleApi(req, res, url) {
     try {
       const body = await parseJsonBody(req);
       const delta = Number(body.delta);
-      if (![1, -1].includes(delta)) {
-        sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
+      if (![1, -1, 5, -5].includes(delta)) {
+        sendJson(res, 400, { error: "delta doit valoir 1, -1, 5 ou -5." });
         return true;
       }
 
@@ -284,11 +284,11 @@ async function handleApi(req, res, url) {
         return true;
       }
 
-      if (kind === "blank" && delta < 0 && state.blankVotes === 0) {
+      if (kind === "blank" && state.blankVotes + delta < 0) {
         sendJson(res, 400, { error: "Le compteur blancs ne peut pas descendre sous 0." });
         return true;
       }
-      if (kind === "null" && delta < 0 && state.nullVotes === 0) {
+      if (kind === "null" && state.nullVotes + delta < 0) {
         sendJson(res, 400, { error: "Le compteur nuls ne peut pas descendre sous 0." });
         return true;
       }

@@ -40,6 +40,10 @@
               >
               <input id="name-2" required maxlength="40" />
             </label>
+            <label>
+              <span class="label-line">Inscrits</span>
+              <input id="registered-voters" type="number" min="0" step="1" />
+            </label>
             <button type="submit">Enregistrer</button>
           </form>
         </div>
@@ -69,6 +73,15 @@
           <article class="stat-card accent-green">
             <h3>Exprimes</h3>
             <p id="expressed-votes" class="big">0</p>
+          </article>
+          <article class="stat-card accent-slate">
+            <h3>Inscrits</h3>
+            <p id="registered-voters-display" class="big">0</p>
+          </article>
+          <article class="stat-card accent-indigo">
+            <h3>Participation</h3>
+            <p id="participation-rate" class="big">-</p>
+            <p id="participation-detail" class="mini">0 / 0</p>
           </article>
           <article class="stat-card accent-teal">
             <h3>Blancs</h3>

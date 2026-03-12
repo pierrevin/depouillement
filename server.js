@@ -28,6 +28,7 @@ function defaultState() {
       { id: "liste-1", name: "Liste 1", votes: 0 },
       { id: "liste-2", name: "Liste 2", votes: 0 }
     ],
+    registeredVoters: 0,
     blankVotes: 0,
     nullVotes: 0,
     history: [],
@@ -55,6 +56,10 @@ function normalizeState(rawState) {
 
   return {
     lists,
+    registeredVoters:
+      Number.isInteger(rawState.registeredVoters) && rawState.registeredVoters >= 0
+        ? rawState.registeredVoters
+        : 0,
     blankVotes:
       Number.isInteger(rawState.blankVotes) && rawState.blankVotes >= 0 ? rawState.blankVotes : 0,
     nullVotes:
@@ -220,6 +225,10 @@ function computePublicState() {
   const expressedVotes = state.lists.reduce((sum, list) => sum + list.votes, 0);
   const nonExpressedVotes = state.blankVotes + state.nullVotes;
   const totalBallots = expressedVotes + nonExpressedVotes;
+  const participationPercent =
+    state.registeredVoters > 0
+      ? Number(((totalBallots / state.registeredVoters) * 100).toFixed(1))
+      : null;
   const sorted = [...state.lists].sort((a, b) => b.votes - a.votes);
   const potentialLeader = sorted[0];
   const runnerUp = sorted[1];
@@ -240,6 +249,8 @@ function computePublicState() {
     totalBallots,
     expressedVotes,
     nonExpressedVotes,
+    registeredVoters: state.registeredVoters,
+    participationPercent,
     blankVotes: state.blankVotes,
     nullVotes: state.nullVotes,
     leader: leader || null,
@@ -319,6 +330,7 @@ function snapshotBeforeChange() {
   return {
     previousVotes: state.lists.map((list) => list.votes),
     previousNames: state.lists.map((list) => list.name),
+    previousRegisteredVoters: state.registeredVoters,
     previousSpecial: {
       blankVotes: state.blankVotes,
       nullVotes: state.nullVotes
@@ -352,15 +364,26 @@ async function handleApi(req, res, url) {
         sendJson(res, 400, { error: "Le champ names doit contenir exactement 2 valeurs." });
         return true;
       }
+      let registeredVoters = state.registeredVoters;
+      if (body.registeredVoters !== undefined) {
+        const parsed = Number(body.registeredVoters);
+        if (!Number.isInteger(parsed) || parsed < 0) {
+          sendJson(res, 400, { error: "registeredVoters doit etre un entier superieur ou egal a 0." });
+          return true;
+        }
+        registeredVoters = parsed;
+      }
 
       const previous = snapshotBeforeChange();
       state.lists[0].name = safeName(names[0], state.lists[0].name);
       state.lists[1].name = safeName(names[1], state.lists[1].name);
+      state.registeredVoters = registeredVoters;
       updateTimestamp();
       pushHistory({
         type: "config",
         ...previous,
-        names: state.lists.map((list) => list.name)
+        names: state.lists.map((list) => list.name),
+        registeredVoters: state.registeredVoters
       });
       saveState();
       broadcast();
@@ -493,6 +516,10 @@ async function handleApi(req, res, url) {
       state.lists.forEach((list, index) => {
         list.name = safeName(last.previousNames[index], list.name);
       });
+    }
+
+    if (Number.isInteger(last.previousRegisteredVoters) && last.previousRegisteredVoters >= 0) {
+      state.registeredVoters = last.previousRegisteredVoters;
     }
 
     if (last.previousSpecial && typeof last.previousSpecial === "object") {

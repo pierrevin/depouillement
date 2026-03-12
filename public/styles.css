@@ -428,12 +428,26 @@ button.danger {
   font-weight: 800;
 }
 
+.mini {
+  margin: 0.2rem 0 0;
+  color: #5d6e83;
+  font-size: 0.78rem;
+}
+
 .accent-blue {
   border-top-color: #2d7be3;
 }
 
 .accent-green {
   border-top-color: #28a56c;
+}
+
+.accent-slate {
+  border-top-color: #6e7f93;
+}
+
+.accent-indigo {
+  border-top-color: #5a63d6;
 }
 
 .accent-teal {

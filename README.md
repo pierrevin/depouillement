@@ -9,6 +9,7 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 - Compteurs +1 / -1 pour les bulletins blancs et nuls
 - Actions rapides mobile: +1 par touche pour un depouillement simple et fiable
 - Statistiques instantanees: total bulletins, exprimes, blancs, nuls, pourcentage, tete, ecart
+- Champ "inscrits" avec calcul automatique du taux de participation
 - Calcul des elus sur 19 sieges (prime majoritaire + proportionnelle)
 - Mode simulation detaille des elus (19 sieges) avec les noms reels des listes
 - Historique recent des actions
@@ -37,7 +38,7 @@ http://localhost:3000
   - `delta` accepte `1`, `-1`
 - `POST /api/special-vote` - ajoute/retire un blanc ou nul (`{ "kind": "blank", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
-- `POST /api/config` - renomme les listes (`{ "names": ["Liste A", "Liste B"] }`)
+- `POST /api/config` - renomme les listes et met a jour les inscrits (`{ "names": ["Liste A", "Liste B"], "registeredVoters": 1200 }`)
 - `POST /api/reset` - remet les compteurs a zero
 - `POST /api/undo` - annule la derniere action
 

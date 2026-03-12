@@ -2,6 +2,8 @@ const state = {
   lists: [],
   totalBallots: 0,
   expressedVotes: 0,
+  registeredVoters: 0,
+  participationPercent: null,
   blankVotes: 0,
   nullVotes: 0,
   gap: 0,
@@ -30,11 +32,15 @@ const elements = {
   configForm: document.getElementById("config-form"),
   name1: document.getElementById("name-1"),
   name2: document.getElementById("name-2"),
+  registeredVotersInput: document.getElementById("registered-voters"),
   lists: document.getElementById("lists"),
   specialVotes: document.getElementById("special-votes"),
   lastUpdate: document.getElementById("last-update"),
   totalBallots: document.getElementById("total-ballots"),
   expressedVotes: document.getElementById("expressed-votes"),
+  registeredVotersDisplay: document.getElementById("registered-voters-display"),
+  participationRate: document.getElementById("participation-rate"),
+  participationDetail: document.getElementById("participation-detail"),
   blankVotes: document.getElementById("blank-votes"),
   nullVotes: document.getElementById("null-votes"),
   leader: document.getElementById("leader"),
@@ -634,6 +640,10 @@ function render() {
   renderHistory();
   elements.totalBallots.textContent = String(state.totalBallots);
   elements.expressedVotes.textContent = String(state.expressedVotes);
+  elements.registeredVotersDisplay.textContent = String(state.registeredVoters);
+  elements.participationRate.textContent =
+    state.participationPercent === null ? "-" : formatPercentage(state.participationPercent);
+  elements.participationDetail.textContent = `${state.totalBallots} / ${state.registeredVoters}`;
   elements.blankVotes.textContent = String(state.blankVotes);
   elements.nullVotes.textContent = String(state.nullVotes);
   elements.gap.textContent = String(state.gap);
@@ -645,6 +655,7 @@ function render() {
   elements.lastUpdate.textContent = `Derniere mise a jour: ${formatDateTime(state.updatedAt)}`;
   elements.name1.value = state.lists[0]?.name || "";
   elements.name2.value = state.lists[1]?.name || "";
+  elements.registeredVotersInput.value = String(state.registeredVoters);
   elements.configLabel1.innerHTML = `<span class="color-dot color-candidate-1"></span>${escapeHtml(
     state.lists[0]?.name || "Liste bleue"
   )} (bouton bleu)`;
@@ -669,6 +680,9 @@ function mergeState(nextState) {
   state.lists = nextState.lists || [];
   state.totalBallots = nextState.totalBallots || nextState.totalVotes || 0;
   state.expressedVotes = nextState.expressedVotes || 0;
+  state.registeredVoters = nextState.registeredVoters || 0;
+  state.participationPercent =
+    typeof nextState.participationPercent === "number" ? nextState.participationPercent : null;
   state.blankVotes = nextState.blankVotes || 0;
   state.nullVotes = nextState.nullVotes || 0;
   state.gap = nextState.gap || 0;
@@ -732,7 +746,14 @@ function setupEvents() {
   elements.configForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      const payload = await callApi("/api/config", { names: [elements.name1.value, elements.name2.value] });
+      const registeredVoters = Math.max(
+        0,
+        Number.parseInt(elements.registeredVotersInput.value || "0", 10) || 0
+      );
+      const payload = await callApi("/api/config", {
+        names: [elements.name1.value, elements.name2.value],
+        registeredVoters
+      });
       mergeState(payload);
       setConfigCollapsed(true);
     } catch (error) {

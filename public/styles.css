@@ -484,12 +484,18 @@ body.admin-write-enabled .active-table-control {
   min-height: 38px;
   padding: 0.4rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid #c1d6df;
-  background: rgba(255, 255, 255, 0.94);
-  color: #1c536c;
-  box-shadow: 0 8px 14px -14px rgba(0, 48, 70, 0.65);
+  border: 1px solid #f1c6c0;
+  background: #fff6f5;
+  color: #a8473a;
+  box-shadow: none;
   font-size: 0.82rem;
   white-space: nowrap;
+}
+
+.undo-inline:hover {
+  background: #ffeceb;
+  border-color: #e8aea7;
+  box-shadow: none;
 }
 
 .quick-block {

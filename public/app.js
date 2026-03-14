@@ -1,5 +1,6 @@
 const state = {
   lists: [],
+  tables: [],
   totalBallots: 0,
   expressedVotes: 0,
   registeredVoters: 0,
@@ -25,11 +26,13 @@ let isConfigCollapsed = false;
 const CONFIG_COLLAPSE_KEY = "depouillement-config-collapsed";
 const SIMULATION_COLLAPSE_KEY = "depouillement-simulation-enabled";
 const MANUAL_COLLAPSE_KEY = "depouillement-manual-collapsed";
+const ACTIVE_TABLE_KEY = "depouillement-active-table-id";
 const DEFAULT_TOTAL_SEATS = 19;
 const CHARTER_COLORS = ["#004a6d", "#fcc549"];
 let currentWritePin = "";
 let isSimulationEnabled = false;
 let isManualCollapsed = true;
+let activeTableId = "table-1";
 const simulationVotesByList = {};
 
 const elements = {
@@ -48,6 +51,10 @@ const elements = {
   accessPin: document.getElementById("access-pin"),
   accessHelp: document.getElementById("access-help"),
   accessModeBadge: document.getElementById("access-mode-badge"),
+  tableSelector: document.getElementById("table-selector"),
+  tableSelect1: document.getElementById("table-select-1"),
+  tableSelect2: document.getElementById("table-select-2"),
+  selectedTableLabel: document.getElementById("selected-table-label"),
   unlockButton: document.getElementById("unlock-button"),
   lockButton: document.getElementById("lock-button"),
   configPanel: document.getElementById("config-panel"),
@@ -62,6 +69,8 @@ const elements = {
   specialVotes: document.getElementById("special-votes"),
   lastUpdate: document.getElementById("last-update"),
   liveModeBadge: document.getElementById("live-mode-badge"),
+  activeTableChip: document.getElementById("active-table-chip"),
+  tablesBreakdown: document.getElementById("tables-breakdown"),
   totalBallots: document.getElementById("total-ballots"),
   expressedVotes: document.getElementById("expressed-votes"),
   registeredVotersDisplay: document.getElementById("registered-voters-display"),
@@ -176,6 +185,30 @@ function setInputValueIfIdle(input, value) {
   if (document.activeElement !== input) {
     input.value = String(value);
   }
+}
+
+function loadActiveTableId() {
+  try {
+    const stored = localStorage.getItem(ACTIVE_TABLE_KEY);
+    if (stored === "table-1" || stored === "table-2") {
+      return stored;
+    }
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
+  return "table-1";
+}
+
+function persistActiveTableId() {
+  try {
+    localStorage.setItem(ACTIVE_TABLE_KEY, activeTableId);
+  } catch {
+    // Ignore storage errors on restricted browsers.
+  }
+}
+
+function getActiveTable() {
+  return state.tables.find((table) => table.id === activeTableId) || null;
 }
 
 function computeSeatAllocationDetailed(listsInput, totalSeatsInput = DEFAULT_TOTAL_SEATS) {
@@ -321,13 +354,18 @@ function computeSeatAllocationDetailed(listsInput, totalSeatsInput = DEFAULT_TOT
 
 function historyLabel(entry) {
   if (!entry) return "";
+  const tablePrefix = entry.tableName ? `[${entry.tableName}] ` : "";
   if (entry.type === "vote") {
     const sign = entry.delta > 0 ? `+${entry.delta}` : String(entry.delta);
-    return `${formatDate(entry.at)} - ${entry.listName} ${sign}`;
+    return `${formatDate(entry.at)} - ${tablePrefix}${entry.listName} ${sign}`;
   }
   if (entry.type === "special_vote") {
     const sign = entry.delta > 0 ? `+${entry.delta}` : String(entry.delta);
-    return `${formatDate(entry.at)} - ${entry.label} ${sign}`;
+    return `${formatDate(entry.at)} - ${tablePrefix}${entry.label} ${sign}`;
+  }
+  if (entry.type === "undo") {
+    const label = entry.revertedLabel || "action";
+    return `${formatDate(entry.at)} - ${tablePrefix}Annulation (${label})`;
   }
   if (entry.type === "reset") {
     return `${formatDate(entry.at)} - Remise à zéro`;
@@ -335,22 +373,22 @@ function historyLabel(entry) {
   if (entry.type === "config") {
     return `${formatDate(entry.at)} - Noms des listes modifiés`;
   }
-  if (entry.type === "set_totals") {
+  if (entry.type === "set_totals_merged") {
     return `${formatDate(entry.at)} - Totaux saisis manuellement`;
   }
   return `${formatDate(entry.at)} - Action`;
 }
 
 function getLastActionMarker() {
-  const latest = state.history[0];
-  if (!latest || typeof latest !== "object") {
-    return null;
-  }
-  if (latest.type === "vote" && typeof latest.listId === "string") {
-    return { type: "vote", listId: latest.listId };
-  }
-  if (latest.type === "special_vote" && (latest.kind === "blank" || latest.kind === "null")) {
-    return { type: "special_vote", kind: latest.kind };
+  for (const latest of state.history) {
+    if (!latest || typeof latest !== "object") continue;
+    if (latest.tableId !== activeTableId) continue;
+    if (latest.type === "vote" && typeof latest.listId === "string") {
+      return { type: "vote", listId: latest.listId, tableId: latest.tableId };
+    }
+    if (latest.type === "special_vote" && (latest.kind === "blank" || latest.kind === "null")) {
+      return { type: "special_vote", kind: latest.kind, tableId: latest.tableId };
+    }
   }
   return null;
 }
@@ -358,11 +396,13 @@ function getLastActionMarker() {
 function renderLists() {
   const writable = canWrite();
   const lastMarker = getLastActionMarker();
+  const activeTable = getActiveTable();
   elements.lists.innerHTML = state.lists
     .map((list, index) => {
       const isLastAction = lastMarker?.type === "vote" && lastMarker.listId === list.id;
+      const tableVotes = Number(activeTable?.listVotes?.[list.id] || 0);
       return `
-      <button class="quick-button candidate candidate-${index + 1} ${isLastAction ? "is-last-action" : ""}" data-action="vote" data-list-id="${list.id}" data-delta="1" aria-disabled="${
+      <button class="quick-button candidate candidate-${index + 1} ${isLastAction ? "is-last-action" : ""}" data-action="vote" data-list-id="${list.id}" data-table-id="${activeTableId}" data-delta="1" aria-disabled="${
         writable ? "false" : "true"
       }">
         <span class="quick-title">${escapeHtml(list.name)}</span>
@@ -373,6 +413,7 @@ function renderLists() {
             <span class="quick-percent">${formatPercentage(list.percentage)}</span>
           </span>
         </span>
+        <span class="quick-subcount">${tableVotes} sur ${escapeHtml(activeTable?.name || "Table active")}</span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
@@ -401,16 +442,29 @@ function renderBars() {
 function renderSpecialVotes() {
   const writable = canWrite();
   const lastMarker = getLastActionMarker();
+  const activeTable = getActiveTable();
   const special = [
-    { kind: "blank", label: "Blancs", votes: state.blankVotes, className: "blanc" },
-    { kind: "null", label: "Nuls", votes: state.nullVotes, className: "nul" }
+    {
+      kind: "blank",
+      label: "Blancs",
+      votes: state.blankVotes,
+      tableVotes: Number(activeTable?.blankVotes || 0),
+      className: "blanc"
+    },
+    {
+      kind: "null",
+      label: "Nuls",
+      votes: state.nullVotes,
+      tableVotes: Number(activeTable?.nullVotes || 0),
+      className: "nul"
+    }
   ];
 
   elements.specialVotes.innerHTML = special
     .map((item) => {
       const isLastAction = lastMarker?.type === "special_vote" && lastMarker.kind === item.kind;
       return `
-      <button class="quick-button soft ${item.className} ${isLastAction ? "is-last-action" : ""}" data-action="special-vote" data-kind="${item.kind}" data-delta="1" aria-disabled="${
+      <button class="quick-button soft ${item.className} ${isLastAction ? "is-last-action" : ""}" data-action="special-vote" data-kind="${item.kind}" data-table-id="${activeTableId}" data-delta="1" aria-disabled="${
         writable ? "false" : "true"
       }">
         <span class="quick-title">${escapeHtml(item.label)}</span>
@@ -420,6 +474,7 @@ function renderSpecialVotes() {
             <span class="quick-unit">bulletins</span>
           </span>
         </span>
+        <span class="quick-subcount">${item.tableVotes} sur ${escapeHtml(activeTable?.name || "Table active")}</span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
@@ -865,7 +920,7 @@ function armResetButton() {
 async function performUndo() {
   if (!canWrite()) return;
   try {
-    const payload = await callApi("/api/undo");
+    const payload = await callApi("/api/undo", { tableId: activeTableId });
     mergeState(payload);
     hapticFeedback();
   } catch (error) {
@@ -884,7 +939,65 @@ function renderHistory() {
     .join("");
 }
 
+function hasUndoableActionForActiveTable() {
+  return state.history.some(
+    (entry) =>
+      entry &&
+      entry.tableId === activeTableId &&
+      (entry.type === "vote" || entry.type === "special_vote")
+  );
+}
+
+function renderTableSelection() {
+  const table1 = state.tables.find((table) => table.id === "table-1");
+  const table2 = state.tables.find((table) => table.id === "table-2");
+  const selected = getActiveTable();
+
+  if (elements.tableSelect1) {
+    elements.tableSelect1.classList.toggle("active", activeTableId === "table-1");
+    elements.tableSelect1.textContent = table1?.name || "Table 1";
+  }
+  if (elements.tableSelect2) {
+    elements.tableSelect2.classList.toggle("active", activeTableId === "table-2");
+    elements.tableSelect2.textContent = table2?.name || "Table 2";
+  }
+  if (elements.selectedTableLabel) {
+    elements.selectedTableLabel.textContent = selected
+      ? `Les actions +1 / Annuler de cet appareil s'appliquent à ${selected.name}.`
+      : "Les actions seront appliquées à la table active.";
+  }
+  if (elements.activeTableChip) {
+    elements.activeTableChip.textContent = selected ? `Table active : ${selected.name}` : "Table active : -";
+  }
+}
+
+function renderTablesBreakdown() {
+  if (!elements.tablesBreakdown || !state.tables.length) {
+    return;
+  }
+  elements.tablesBreakdown.innerHTML = state.tables
+    .map((table) => {
+      const tableList1 = Number(table.listVotes?.["liste-1"] || 0);
+      const tableList2 = Number(table.listVotes?.["liste-2"] || 0);
+      const tableBlank = Number(table.blankVotes || 0);
+      const tableNull = Number(table.nullVotes || 0);
+      const tableTotal = Number(table.totalVotes || 0);
+      const selectedClass = table.id === activeTableId ? " active" : "";
+      return `
+        <article class="table-mini-card${selectedClass}">
+          <strong>${escapeHtml(table.name)}</strong>
+          <span>L1: ${tableList1} · L2: ${tableList2}</span>
+          <span>Blancs: ${tableBlank} · Nuls: ${tableNull}</span>
+          <span>Total: ${tableTotal}</span>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function render() {
+  renderTableSelection();
+  renderTablesBreakdown();
   renderLists();
   renderSpecialVotes();
   renderBars();
@@ -950,8 +1063,8 @@ function render() {
   renderSimulationResult();
   renderAccessControls();
   renderManualTotals();
-  elements.undoButton.disabled = !writable || state.history.length === 0;
-  elements.undoButton.textContent = "Annuler";
+  elements.undoButton.disabled = !writable || !hasUndoableActionForActiveTable();
+  elements.undoButton.textContent = `Annuler (${getActiveTable()?.name || "table active"})`;
   const canReset = state.totalBallots > 0;
   elements.resetButton.disabled = !writable || !canReset;
   if (!canReset) {
@@ -965,6 +1078,7 @@ function render() {
 
 function mergeState(nextState) {
   state.lists = nextState.lists || [];
+  state.tables = Array.isArray(nextState.tables) ? nextState.tables : [];
   state.totalBallots = nextState.totalBallots || nextState.totalVotes || 0;
   state.expressedVotes = nextState.expressedVotes || 0;
   state.registeredVoters = nextState.registeredVoters || 0;
@@ -982,6 +1096,10 @@ function mergeState(nextState) {
   state.seatAllocation = nextState.seatAllocation || null;
   state.history = nextState.history || [];
   state.updatedAt = nextState.updatedAt || null;
+  if (!state.tables.some((table) => table.id === activeTableId)) {
+    activeTableId = state.tables.some((table) => table.id === "table-2") ? "table-2" : "table-1";
+    persistActiveTableId();
+  }
   render();
 }
 
@@ -1092,6 +1210,22 @@ function setupEvents() {
   if (elements.adminBackdrop) {
     elements.adminBackdrop.addEventListener("click", () => {
       setAdminDrawerOpen(false);
+    });
+  }
+
+  if (elements.tableSelect1) {
+    elements.tableSelect1.addEventListener("click", () => {
+      activeTableId = "table-1";
+      persistActiveTableId();
+      render();
+    });
+  }
+
+  if (elements.tableSelect2) {
+    elements.tableSelect2.addEventListener("click", () => {
+      activeTableId = "table-2";
+      persistActiveTableId();
+      render();
     });
   }
 
@@ -1234,9 +1368,10 @@ function setupEvents() {
     const button = event.target.closest("button[data-action='vote']");
     if (!button) return;
     const listId = button.dataset.listId;
+    const tableId = button.dataset.tableId || activeTableId;
     const delta = Number(button.dataset.delta);
     try {
-      const payload = await callApi("/api/vote", { listId, delta });
+      const payload = await callApi("/api/vote", { tableId, listId, delta });
       mergeState(payload);
       hapticFeedback();
     } catch (error) {
@@ -1249,9 +1384,10 @@ function setupEvents() {
     const button = event.target.closest("button[data-action='special-vote']");
     if (!button) return;
     const kind = button.dataset.kind;
+    const tableId = button.dataset.tableId || activeTableId;
     const delta = Number(button.dataset.delta);
     try {
-      const payload = await callApi("/api/special-vote", { kind, delta });
+      const payload = await callApi("/api/special-vote", { tableId, kind, delta });
       mergeState(payload);
       hapticFeedback();
     } catch (error) {
@@ -1333,6 +1469,7 @@ function setupRealtime() {
 }
 
 async function boot() {
+  activeTableId = loadActiveTableId();
   setConfigCollapsed(loadConfigCollapsePreference());
   setSimulationEnabled(loadSimulationPreference());
   setManualCollapsed(loadManualCollapsePreference());

@@ -25,6 +25,10 @@ const ADMIN_SESSION_SECRET =
 const STATIC_DIR = path.join(__dirname, "public");
 const DATA_FILE = path.join(__dirname, "data", "state.json");
 const DEFAULT_LIST_NAMES = ["J'aime St Paul - PEREZ", "Osons St Paul - URBAN"];
+const DEFAULT_TABLES = [
+  { id: "table-1", name: "Table 1" },
+  { id: "table-2", name: "Table 2" }
+];
 const DEFAULT_REGISTERED_VOTERS = 1153;
 const LEGACY_LIST_NAMES = ["Liste 1", "Liste 2", "Liste lagon", "Liste orange", "Liste corail"];
 
@@ -44,12 +48,14 @@ const clients = new Set();
 function defaultState() {
   return {
     lists: [
-      { id: "liste-1", name: DEFAULT_LIST_NAMES[0], votes: 0 },
-      { id: "liste-2", name: DEFAULT_LIST_NAMES[1], votes: 0 }
+      { id: "liste-1", name: DEFAULT_LIST_NAMES[0] },
+      { id: "liste-2", name: DEFAULT_LIST_NAMES[1] }
+    ],
+    tables: [
+      { id: DEFAULT_TABLES[0].id, name: DEFAULT_TABLES[0].name, listVotes: { "liste-1": 0, "liste-2": 0 }, blankVotes: 0, nullVotes: 0 },
+      { id: DEFAULT_TABLES[1].id, name: DEFAULT_TABLES[1].name, listVotes: { "liste-1": 0, "liste-2": 0 }, blankVotes: 0, nullVotes: 0 }
     ],
     registeredVoters: DEFAULT_REGISTERED_VOTERS,
-    blankVotes: 0,
-    nullVotes: 0,
     history: [],
     updatedAt: new Date().toISOString()
   };
@@ -59,34 +65,81 @@ function ensureDataFolder() {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
 }
 
-function normalizeState(rawState) {
-  const fallback = defaultState();
-  if (!rawState || !Array.isArray(rawState.lists) || rawState.lists.length !== 2) {
-    return fallback;
-  }
+function toNonNegativeInteger(value, fallback = 0) {
+  return Number.isInteger(value) && value >= 0 ? value : fallback;
+}
 
-  const lists = rawState.lists.map((list, index) => {
+function normalizeListNames(rawLists) {
+  return rawLists.map((list, index) => {
     const id = index === 0 ? "liste-1" : "liste-2";
     const cleanedName = typeof list.name === "string" ? list.name.trim() : "";
     const shouldUseDefault = !cleanedName || LEGACY_LIST_NAMES.includes(cleanedName);
     const name = shouldUseDefault
       ? DEFAULT_LIST_NAMES[index] || `Liste ${index + 1}`
       : cleanedName.slice(0, 40);
-    const votes = Number.isInteger(list.votes) && list.votes >= 0 ? list.votes : 0;
-    return { id, name, votes };
+    return { id, name };
   });
+}
+
+function defaultTablesState() {
+  return DEFAULT_TABLES.map((table) => ({
+    id: table.id,
+    name: table.name,
+    listVotes: { "liste-1": 0, "liste-2": 0 },
+    blankVotes: 0,
+    nullVotes: 0
+  }));
+}
+
+function normalizeTableState(rawTable, index) {
+  const fallback = DEFAULT_TABLES[index] || { id: `table-${index + 1}`, name: `Table ${index + 1}` };
+  const listVotes = rawTable && typeof rawTable.listVotes === "object" ? rawTable.listVotes : {};
+  return {
+    id: fallback.id,
+    name:
+      rawTable && typeof rawTable.name === "string" && rawTable.name.trim()
+        ? rawTable.name.trim().slice(0, 30)
+        : fallback.name,
+    listVotes: {
+      "liste-1": toNonNegativeInteger(listVotes["liste-1"], 0),
+      "liste-2": toNonNegativeInteger(listVotes["liste-2"], 0)
+    },
+    blankVotes: toNonNegativeInteger(rawTable?.blankVotes, 0),
+    nullVotes: toNonNegativeInteger(rawTable?.nullVotes, 0)
+  };
+}
+
+function normalizeState(rawState) {
+  const fallback = defaultState();
+  if (!rawState || !Array.isArray(rawState.lists) || rawState.lists.length !== 2) {
+    return fallback;
+  }
+
+  const lists = normalizeListNames(rawState.lists);
+  let tables = defaultTablesState();
+
+  if (Array.isArray(rawState.tables) && rawState.tables.length === 2) {
+    tables = rawState.tables.map((table, index) => normalizeTableState(table, index));
+  } else {
+    // Migration douce de l'ancien format (totaux globaux) vers 2 tables:
+    // on conserve l'existant sur la table 1 et on initialise la table 2 à zéro.
+    const legacyVotes1 = toNonNegativeInteger(rawState.lists?.[0]?.votes, 0);
+    const legacyVotes2 = toNonNegativeInteger(rawState.lists?.[1]?.votes, 0);
+    tables = defaultTablesState();
+    tables[0].listVotes["liste-1"] = legacyVotes1;
+    tables[0].listVotes["liste-2"] = legacyVotes2;
+    tables[0].blankVotes = toNonNegativeInteger(rawState.blankVotes, 0);
+    tables[0].nullVotes = toNonNegativeInteger(rawState.nullVotes, 0);
+  }
 
   return {
     lists,
+    tables,
     registeredVoters:
-      Number.isInteger(rawState.registeredVoters) && rawState.registeredVoters > 0
+      Number.isInteger(rawState.registeredVoters) && rawState.registeredVoters >= 0
         ? rawState.registeredVoters
         : DEFAULT_REGISTERED_VOTERS,
-    blankVotes:
-      Number.isInteger(rawState.blankVotes) && rawState.blankVotes >= 0 ? rawState.blankVotes : 0,
-    nullVotes:
-      Number.isInteger(rawState.nullVotes) && rawState.nullVotes >= 0 ? rawState.nullVotes : 0,
-    history: Array.isArray(rawState.history) ? rawState.history.slice(-100) : [],
+    history: Array.isArray(rawState.history) ? rawState.history.slice(-200) : [],
     updatedAt: typeof rawState.updatedAt === "string" ? rawState.updatedAt : new Date().toISOString()
   };
 }
@@ -243,15 +296,45 @@ function computeSeatAllocation({ lists, expressedVotes, leader, hasTieForLead })
   };
 }
 
+function getMergedListVotes() {
+  const merged = { "liste-1": 0, "liste-2": 0 };
+  for (const table of state.tables) {
+    merged["liste-1"] += toNonNegativeInteger(table.listVotes?.["liste-1"], 0);
+    merged["liste-2"] += toNonNegativeInteger(table.listVotes?.["liste-2"], 0);
+  }
+  return merged;
+}
+
+function getMergedSpecialVotes() {
+  return state.tables.reduce(
+    (acc, table) => {
+      acc.blankVotes += toNonNegativeInteger(table.blankVotes, 0);
+      acc.nullVotes += toNonNegativeInteger(table.nullVotes, 0);
+      return acc;
+    },
+    { blankVotes: 0, nullVotes: 0 }
+  );
+}
+
+function tableById(tableId) {
+  return state.tables.find((table) => table.id === tableId);
+}
+
 function computePublicState() {
-  const expressedVotes = state.lists.reduce((sum, list) => sum + list.votes, 0);
-  const nonExpressedVotes = state.blankVotes + state.nullVotes;
+  const mergedVotes = getMergedListVotes();
+  const mergedSpecial = getMergedSpecialVotes();
+  const listsWithVotes = state.lists.map((list) => ({
+    ...list,
+    votes: toNonNegativeInteger(mergedVotes[list.id], 0)
+  }));
+  const expressedVotes = listsWithVotes.reduce((sum, list) => sum + list.votes, 0);
+  const nonExpressedVotes = mergedSpecial.blankVotes + mergedSpecial.nullVotes;
   const totalBallots = expressedVotes + nonExpressedVotes;
   const participationPercent =
     state.registeredVoters > 0
       ? Number(((totalBallots / state.registeredVoters) * 100).toFixed(1))
       : null;
-  const sorted = [...state.lists].sort((a, b) => b.votes - a.votes);
+  const sorted = [...listsWithVotes].sort((a, b) => b.votes - a.votes);
   const potentialLeader = sorted[0];
   const runnerUp = sorted[1];
   const gap = potentialLeader ? potentialLeader.votes - (runnerUp ? runnerUp.votes : 0) : 0;
@@ -259,14 +342,30 @@ function computePublicState() {
     expressedVotes > 0 && runnerUp && potentialLeader && potentialLeader.votes === runnerUp.votes
   );
   const leader = expressedVotes > 0 && !hasTieForLead ? potentialLeader : null;
-  const seatAllocation = computeSeatAllocation({ lists: state.lists, expressedVotes, leader, hasTieForLead });
+  const seatAllocation = computeSeatAllocation({ lists: listsWithVotes, expressedVotes, leader, hasTieForLead });
 
   return {
-    lists: state.lists.map((list) => ({
+    lists: listsWithVotes.map((list) => ({
       ...list,
       percentage:
         expressedVotes === 0 ? 0 : Number(((list.votes / expressedVotes) * 100).toFixed(1))
     })),
+    tables: state.tables.map((table) => {
+      const votesByList = {
+        "liste-1": toNonNegativeInteger(table.listVotes?.["liste-1"], 0),
+        "liste-2": toNonNegativeInteger(table.listVotes?.["liste-2"], 0)
+      };
+      const tableExpressed = votesByList["liste-1"] + votesByList["liste-2"];
+      const tableTotal = tableExpressed + toNonNegativeInteger(table.blankVotes, 0) + toNonNegativeInteger(table.nullVotes, 0);
+      return {
+        id: table.id,
+        name: table.name,
+        listVotes: votesByList,
+        blankVotes: toNonNegativeInteger(table.blankVotes, 0),
+        nullVotes: toNonNegativeInteger(table.nullVotes, 0),
+        totalVotes: tableTotal
+      };
+    }),
     totalVotes: totalBallots,
     totalBallots,
     expressedVotes,
@@ -274,8 +373,8 @@ function computePublicState() {
     registeredVoters: state.registeredVoters,
     participationPercent,
     writeProtectionEnabled: WRITE_PROTECTION_ENABLED,
-    blankVotes: state.blankVotes,
-    nullVotes: state.nullVotes,
+    blankVotes: mergedSpecial.blankVotes,
+    nullVotes: mergedSpecial.nullVotes,
     leader: leader || null,
     hasTieForLead,
     gap,
@@ -442,8 +541,8 @@ function pushHistory(entry) {
     at: new Date().toISOString(),
     ...entry
   });
-  if (state.history.length > 100) {
-    state.history = state.history.slice(-100);
+  if (state.history.length > 200) {
+    state.history = state.history.slice(-200);
   }
 }
 
@@ -493,14 +592,23 @@ function safeName(input, fallback) {
 
 function snapshotBeforeChange() {
   return {
-    previousVotes: state.lists.map((list) => list.votes),
     previousNames: state.lists.map((list) => list.name),
     previousRegisteredVoters: state.registeredVoters,
-    previousSpecial: {
-      blankVotes: state.blankVotes,
-      nullVotes: state.nullVotes
-    }
+    previousTables: state.tables.map((table) => ({
+      id: table.id,
+      listVotes: {
+        "liste-1": toNonNegativeInteger(table.listVotes?.["liste-1"], 0),
+        "liste-2": toNonNegativeInteger(table.listVotes?.["liste-2"], 0)
+      },
+      blankVotes: toNonNegativeInteger(table.blankVotes, 0),
+      nullVotes: toNonNegativeInteger(table.nullVotes, 0)
+    }))
   };
+}
+
+function parseTableId(input) {
+  const value = typeof input === "string" ? input.trim() : "";
+  return DEFAULT_TABLES.some((table) => table.id === value) ? value : "";
 }
 
 async function handleApi(req, res, url) {
@@ -663,6 +771,16 @@ async function handleApi(req, res, url) {
     }
     try {
       const body = await parseJsonBody(req);
+      const tableId = parseTableId(body.tableId);
+      if (!tableId) {
+        sendJson(res, 400, { error: "tableId doit valoir table-1 ou table-2." });
+        return true;
+      }
+      const table = tableById(tableId);
+      if (!table) {
+        sendJson(res, 404, { error: "Table introuvable." });
+        return true;
+      }
       const delta = Number(body.delta);
       if (![1, -1].includes(delta)) {
         sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
@@ -673,20 +791,21 @@ async function handleApi(req, res, url) {
         sendJson(res, 404, { error: "Liste introuvable." });
         return true;
       }
-      if (list.votes + delta < 0) {
+      const currentVotes = toNonNegativeInteger(table.listVotes?.[list.id], 0);
+      if (currentVotes + delta < 0) {
         sendJson(res, 400, { error: "Le compteur ne peut pas descendre sous 0." });
         return true;
       }
 
-      const previous = snapshotBeforeChange();
-      list.votes += delta;
+      table.listVotes[list.id] = currentVotes + delta;
       updateTimestamp();
       pushHistory({
         type: "vote",
+        tableId: table.id,
+        tableName: table.name,
         listId: list.id,
         listName: list.name,
-        delta,
-        ...previous
+        delta
       });
       saveState();
       broadcast();
@@ -704,6 +823,16 @@ async function handleApi(req, res, url) {
     }
     try {
       const body = await parseJsonBody(req);
+      const tableId = parseTableId(body.tableId);
+      if (!tableId) {
+        sendJson(res, 400, { error: "tableId doit valoir table-1 ou table-2." });
+        return true;
+      }
+      const table = tableById(tableId);
+      if (!table) {
+        sendJson(res, 404, { error: "Table introuvable." });
+        return true;
+      }
       const delta = Number(body.delta);
       if (![1, -1].includes(delta)) {
         sendJson(res, 400, { error: "delta doit valoir 1 ou -1." });
@@ -716,29 +845,31 @@ async function handleApi(req, res, url) {
         return true;
       }
 
-      if (kind === "blank" && state.blankVotes + delta < 0) {
+      const currentBlank = toNonNegativeInteger(table.blankVotes, 0);
+      const currentNull = toNonNegativeInteger(table.nullVotes, 0);
+      if (kind === "blank" && currentBlank + delta < 0) {
         sendJson(res, 400, { error: "Le compteur Blancs ne peut pas descendre sous 0." });
         return true;
       }
-      if (kind === "null" && state.nullVotes + delta < 0) {
+      if (kind === "null" && currentNull + delta < 0) {
         sendJson(res, 400, { error: "Le compteur Nuls ne peut pas descendre sous 0." });
         return true;
       }
 
-      const previous = snapshotBeforeChange();
       if (kind === "blank") {
-        state.blankVotes += delta;
+        table.blankVotes = currentBlank + delta;
       } else {
-        state.nullVotes += delta;
+        table.nullVotes = currentNull + delta;
       }
 
       updateTimestamp();
       pushHistory({
         type: "special_vote",
+        tableId: table.id,
+        tableName: table.name,
         kind,
         label: kind === "blank" ? "Blancs" : "Nuls",
-        delta,
-        ...previous
+        delta
       });
       saveState();
       broadcast();
@@ -755,9 +886,12 @@ async function handleApi(req, res, url) {
       return true;
     }
     const previous = snapshotBeforeChange();
-    state.lists = state.lists.map((list) => ({ ...list, votes: 0 }));
-    state.blankVotes = 0;
-    state.nullVotes = 0;
+    state.tables = state.tables.map((table, index) => ({
+      ...normalizeTableState(table, index),
+      listVotes: { "liste-1": 0, "liste-2": 0 },
+      blankVotes: 0,
+      nullVotes: 0
+    }));
     updateTimestamp();
     pushHistory({
       type: "reset",
@@ -773,37 +907,86 @@ async function handleApi(req, res, url) {
     if (!ensureWriteAccess(req, res)) {
       return true;
     }
-    const last = state.history.pop();
-    if (!last) {
-        sendJson(res, 400, { error: "Aucune action à annuler." });
+    let body = {};
+    try {
+      body = await parseJsonBody(req);
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
       return true;
     }
 
-    if (Array.isArray(last.previousVotes) && last.previousVotes.length === state.lists.length) {
-      state.lists.forEach((list, index) => {
-        const value = last.previousVotes[index];
-        list.votes = Number.isInteger(value) && value >= 0 ? value : 0;
-      });
+    const tableId = parseTableId(body.tableId);
+    if (!tableId) {
+      sendJson(res, 400, { error: "tableId doit valoir table-1 ou table-2." });
+      return true;
+    }
+    const table = tableById(tableId);
+    if (!table) {
+      sendJson(res, 404, { error: "Table introuvable." });
+      return true;
     }
 
-    if (Array.isArray(last.previousNames) && last.previousNames.length === state.lists.length) {
-      state.lists.forEach((list, index) => {
-        list.name = safeName(last.previousNames[index], list.name);
-      });
+    let indexToUndo = -1;
+    for (let index = state.history.length - 1; index >= 0; index -= 1) {
+      const entry = state.history[index];
+      const isUndoableType = entry?.type === "vote" || entry?.type === "special_vote";
+      if (isUndoableType && entry.tableId === tableId) {
+        indexToUndo = index;
+        break;
+      }
     }
 
-    if (Number.isInteger(last.previousRegisteredVoters) && last.previousRegisteredVoters >= 0) {
-      state.registeredVoters = last.previousRegisteredVoters;
+    if (indexToUndo < 0) {
+      sendJson(res, 400, { error: "Aucune action à annuler pour cette table." });
+      return true;
+    }
+    const target = state.history[indexToUndo];
+
+    if (target.type === "vote") {
+      const listId = target.listId === "liste-1" || target.listId === "liste-2" ? target.listId : "";
+      if (!listId) {
+        sendJson(res, 400, { error: "Action impossible à annuler (liste invalide)." });
+        return true;
+      }
+      const currentVotes = toNonNegativeInteger(table.listVotes?.[listId], 0);
+      const reversed = currentVotes - Number(target.delta || 0);
+      if (!Number.isInteger(reversed) || reversed < 0) {
+        sendJson(res, 400, { error: "Action impossible à annuler (compteur incohérent)." });
+        return true;
+      }
+      table.listVotes[listId] = reversed;
+    } else if (target.type === "special_vote") {
+      const reversedDelta = Number(target.delta || 0);
+      if (target.kind === "blank") {
+        const next = toNonNegativeInteger(table.blankVotes, 0) - reversedDelta;
+        if (!Number.isInteger(next) || next < 0) {
+          sendJson(res, 400, { error: "Action impossible à annuler (blancs incohérents)." });
+          return true;
+        }
+        table.blankVotes = next;
+      } else if (target.kind === "null") {
+        const next = toNonNegativeInteger(table.nullVotes, 0) - reversedDelta;
+        if (!Number.isInteger(next) || next < 0) {
+          sendJson(res, 400, { error: "Action impossible à annuler (nuls incohérents)." });
+          return true;
+        }
+        table.nullVotes = next;
+      } else {
+        sendJson(res, 400, { error: "Action impossible à annuler (type spécial invalide)." });
+        return true;
+      }
     }
 
-    if (last.previousSpecial && typeof last.previousSpecial === "object") {
-      const blankVotes = last.previousSpecial.blankVotes;
-      const nullVotes = last.previousSpecial.nullVotes;
-      state.blankVotes = Number.isInteger(blankVotes) && blankVotes >= 0 ? blankVotes : 0;
-      state.nullVotes = Number.isInteger(nullVotes) && nullVotes >= 0 ? nullVotes : 0;
-    }
-
+    state.history.splice(indexToUndo, 1);
     updateTimestamp();
+    pushHistory({
+      type: "undo",
+      tableId: table.id,
+      tableName: table.name,
+      revertedType: target.type,
+      revertedLabel:
+        target.type === "vote" ? target.listName : target.kind === "blank" ? "Blancs" : "Nuls"
+    });
     saveState();
     broadcast();
     sendJson(res, 200, computePublicState());
@@ -840,14 +1023,15 @@ async function handleApi(req, res, url) {
       }
 
       const previous = snapshotBeforeChange();
-      state.lists.forEach((list, index) => {
-        list.votes = parsedVotes[index];
-      });
-      state.blankVotes = blankVotes;
-      state.nullVotes = nullVotes;
+      state.tables = state.tables.map((table, index) => ({
+        ...normalizeTableState(table, index),
+        listVotes: index === 0 ? { "liste-1": parsedVotes[0], "liste-2": parsedVotes[1] } : { "liste-1": 0, "liste-2": 0 },
+        blankVotes: index === 0 ? blankVotes : 0,
+        nullVotes: index === 0 ? nullVotes : 0
+      }));
       updateTimestamp();
       pushHistory({
-        type: "set_totals",
+        type: "set_totals_merged",
         listVotes: parsedVotes,
         blankVotes,
         nullVotes,

@@ -51,13 +51,8 @@ const elements = {
   accessPin: document.getElementById("access-pin"),
   accessHelp: document.getElementById("access-help"),
   accessModeBadge: document.getElementById("access-mode-badge"),
-  tableSelector: document.getElementById("table-selector"),
-  tableSelect1: document.getElementById("table-select-1"),
-  tableSelect2: document.getElementById("table-select-2"),
-  quickTableSelector: document.getElementById("quick-table-selector"),
-  quickTableSelect1: document.getElementById("quick-table-select-1"),
-  quickTableSelect2: document.getElementById("quick-table-select-2"),
-  selectedTableLabel: document.getElementById("selected-table-label"),
+  activeTableControl: document.getElementById("active-table-control"),
+  activeTableSelect: document.getElementById("active-table-select"),
   unlockButton: document.getElementById("unlock-button"),
   lockButton: document.getElementById("lock-button"),
   configPanel: document.getElementById("config-panel"),
@@ -72,7 +67,6 @@ const elements = {
   specialVotes: document.getElementById("special-votes"),
   lastUpdate: document.getElementById("last-update"),
   liveModeBadge: document.getElementById("live-mode-badge"),
-  activeTableChip: document.getElementById("active-table-chip"),
   tablesBreakdown: document.getElementById("tables-breakdown"),
   totalBallots: document.getElementById("total-ballots"),
   expressedVotes: document.getElementById("expressed-votes"),
@@ -408,11 +402,13 @@ function getLastActionMarker() {
 function renderLists() {
   const writable = canWrite();
   const lastMarker = getLastActionMarker();
-  const activeTable = getActiveTable();
+  const table1 = state.tables.find((table) => table.id === "table-1");
+  const table2 = state.tables.find((table) => table.id === "table-2");
   elements.lists.innerHTML = state.lists
     .map((list, index) => {
       const isLastAction = lastMarker?.type === "vote" && lastMarker.listId === list.id;
-      const tableVotes = Number(activeTable?.listVotes?.[list.id] || 0);
+      const table1Votes = Number(table1?.listVotes?.[list.id] || 0);
+      const table2Votes = Number(table2?.listVotes?.[list.id] || 0);
       return `
       <button class="quick-button candidate candidate-${index + 1} ${isLastAction ? "is-last-action" : ""}" data-action="vote" data-list-id="${list.id}" data-table-id="${activeTableId}" data-delta="1" aria-disabled="${
         writable ? "false" : "true"
@@ -425,7 +421,7 @@ function renderLists() {
             <span class="quick-percent">${formatPercentage(list.percentage)}</span>
           </span>
         </span>
-        <span class="quick-subcount">${tableVotes} sur ${escapeHtml(activeTable?.name || "Table active")}</span>
+        <span class="quick-subcount">T1: ${table1Votes} · T2: ${table2Votes}</span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
@@ -454,20 +450,23 @@ function renderBars() {
 function renderSpecialVotes() {
   const writable = canWrite();
   const lastMarker = getLastActionMarker();
-  const activeTable = getActiveTable();
+  const table1 = state.tables.find((table) => table.id === "table-1");
+  const table2 = state.tables.find((table) => table.id === "table-2");
   const special = [
     {
       kind: "blank",
       label: "Blancs",
       votes: state.blankVotes,
-      tableVotes: Number(activeTable?.blankVotes || 0),
+      table1Votes: Number(table1?.blankVotes || 0),
+      table2Votes: Number(table2?.blankVotes || 0),
       className: "blanc"
     },
     {
       kind: "null",
       label: "Nuls",
       votes: state.nullVotes,
-      tableVotes: Number(activeTable?.nullVotes || 0),
+      table1Votes: Number(table1?.nullVotes || 0),
+      table2Votes: Number(table2?.nullVotes || 0),
       className: "nul"
     }
   ];
@@ -486,7 +485,7 @@ function renderSpecialVotes() {
             <span class="quick-unit">bulletins</span>
           </span>
         </span>
-        <span class="quick-subcount">${item.tableVotes} sur ${escapeHtml(activeTable?.name || "Table active")}</span>
+        <span class="quick-subcount">T1: ${item.table1Votes} · T2: ${item.table2Votes}</span>
         ${isLastAction ? '<span class="last-action-tag">Dernière action</span>' : ""}
       </button>
     `;
@@ -963,31 +962,13 @@ function hasUndoableActionForActiveTable() {
 function renderTableSelection() {
   const table1 = state.tables.find((table) => table.id === "table-1");
   const table2 = state.tables.find((table) => table.id === "table-2");
-  const selected = getActiveTable();
-
-  if (elements.tableSelect1) {
-    elements.tableSelect1.classList.toggle("active", activeTableId === "table-1");
-    elements.tableSelect1.textContent = table1?.name || "Table 1";
-  }
-  if (elements.tableSelect2) {
-    elements.tableSelect2.classList.toggle("active", activeTableId === "table-2");
-    elements.tableSelect2.textContent = table2?.name || "Table 2";
-  }
-  if (elements.quickTableSelect1) {
-    elements.quickTableSelect1.classList.toggle("active", activeTableId === "table-1");
-    elements.quickTableSelect1.textContent = table1?.name || "Table 1";
-  }
-  if (elements.quickTableSelect2) {
-    elements.quickTableSelect2.classList.toggle("active", activeTableId === "table-2");
-    elements.quickTableSelect2.textContent = table2?.name || "Table 2";
-  }
-  if (elements.selectedTableLabel) {
-    elements.selectedTableLabel.textContent = selected
-      ? `Les actions +1 / Annuler de cet appareil s'appliquent à ${selected.name}.`
-      : "Les actions seront appliquées à la table active.";
-  }
-  if (elements.activeTableChip) {
-    elements.activeTableChip.textContent = selected ? `Table active : ${selected.name}` : "Table active : -";
+  if (elements.activeTableSelect) {
+    const currentValue = activeTableId === "table-2" ? "table-2" : "table-1";
+    elements.activeTableSelect.value = currentValue;
+    const option1 = elements.activeTableSelect.querySelector("option[value='table-1']");
+    const option2 = elements.activeTableSelect.querySelector("option[value='table-2']");
+    if (option1) option1.textContent = table1?.name || "Table 1";
+    if (option2) option2.textContent = table2?.name || "Table 2";
   }
 }
 
@@ -995,24 +976,30 @@ function renderTablesBreakdown() {
   if (!elements.tablesBreakdown || !state.tables.length) {
     return;
   }
-  elements.tablesBreakdown.innerHTML = state.tables
-    .map((table) => {
-      const tableList1 = Number(table.listVotes?.["liste-1"] || 0);
-      const tableList2 = Number(table.listVotes?.["liste-2"] || 0);
-      const tableBlank = Number(table.blankVotes || 0);
-      const tableNull = Number(table.nullVotes || 0);
-      const tableTotal = Number(table.totalVotes || 0);
-      const selectedClass = table.id === activeTableId ? " active" : "";
-      return `
-        <article class="table-mini-card${selectedClass}">
-          <strong>${escapeHtml(table.name)}</strong>
-          <span>L1: ${tableList1} · L2: ${tableList2}</span>
-          <span>Blancs: ${tableBlank} · Nuls: ${tableNull}</span>
-          <span>Total: ${tableTotal}</span>
-        </article>
-      `;
-    })
-    .join("");
+  const table1 = state.tables.find((table) => table.id === "table-1");
+  const table2 = state.tables.find((table) => table.id === "table-2");
+  if (!table1 || !table2) {
+    elements.tablesBreakdown.innerHTML = "";
+    return;
+  }
+  const t1l1 = Number(table1.listVotes?.["liste-1"] || 0);
+  const t1l2 = Number(table1.listVotes?.["liste-2"] || 0);
+  const t2l1 = Number(table2.listVotes?.["liste-1"] || 0);
+  const t2l2 = Number(table2.listVotes?.["liste-2"] || 0);
+  const t1Blank = Number(table1.blankVotes || 0);
+  const t1Null = Number(table1.nullVotes || 0);
+  const t2Blank = Number(table2.blankVotes || 0);
+  const t2Null = Number(table2.nullVotes || 0);
+  const t1Total = Number(table1.totalVotes || 0);
+  const t2Total = Number(table2.totalVotes || 0);
+
+  elements.tablesBreakdown.innerHTML = `
+    <article class="table-mini-card">
+      <strong>Détail des tables (fusion automatique)</strong>
+      <span>${escapeHtml(table1.name)} · L1: ${t1l1} · L2: ${t1l2} · Blancs: ${t1Blank} · Nuls: ${t1Null} · Total: ${t1Total}</span>
+      <span>${escapeHtml(table2.name)} · L1: ${t2l1} · L2: ${t2l2} · Blancs: ${t2Blank} · Nuls: ${t2Null} · Total: ${t2Total}</span>
+    </article>
+  `;
 }
 
 function render() {
@@ -1233,27 +1220,10 @@ function setupEvents() {
     });
   }
 
-  if (elements.tableSelect1) {
-    elements.tableSelect1.addEventListener("click", () => {
-      setActiveTable("table-1");
-    });
-  }
-
-  if (elements.tableSelect2) {
-    elements.tableSelect2.addEventListener("click", () => {
-      setActiveTable("table-2");
-    });
-  }
-
-  if (elements.quickTableSelect1) {
-    elements.quickTableSelect1.addEventListener("click", () => {
-      setActiveTable("table-1");
-    });
-  }
-
-  if (elements.quickTableSelect2) {
-    elements.quickTableSelect2.addEventListener("click", () => {
-      setActiveTable("table-2");
+  if (elements.activeTableSelect) {
+    elements.activeTableSelect.addEventListener("change", () => {
+      const value = elements.activeTableSelect.value;
+      setActiveTable(value);
     });
   }
 

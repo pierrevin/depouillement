@@ -51,28 +51,19 @@
           <button id="lock-button" type="button" class="ghost">Quitter admin</button>
           <button id="admin-close-button" type="button" class="ghost">Fermer</button>
         </form>
-        <div id="table-selector" class="table-selector">
-          <p class="mini">Table de saisie sur cet appareil</p>
-          <div class="table-selector-buttons">
-            <button id="table-select-1" type="button" class="ghost">Table 1</button>
-            <button id="table-select-2" type="button" class="ghost">Table 2</button>
-          </div>
-          <p id="selected-table-label" class="mini">Les actions seront appliquées à la table active.</p>
-        </div>
       </section>
 
       <section class="panel quick-panel">
         <div class="quick-panel-head">
           <h2>Nombre de voix</h2>
-          <p id="active-table-chip" class="mini active-table-chip">Table active : Table 1</p>
+          <label id="active-table-control" class="mini active-table-control admin-only" hidden>
+            Table de saisie
+            <select id="active-table-select">
+              <option value="table-1">Table 1</option>
+              <option value="table-2">Table 2</option>
+            </select>
+          </label>
           <button id="undo-button" type="button" class="undo-inline admin-only" hidden>Annuler</button>
-        </div>
-        <div id="quick-table-selector" class="quick-table-selector admin-only" hidden>
-          <span class="mini">Changer de table :</span>
-          <div class="table-selector-buttons">
-            <button id="quick-table-select-1" type="button" class="ghost">Table 1</button>
-            <button id="quick-table-select-2" type="button" class="ghost">Table 2</button>
-          </div>
         </div>
         <div class="quick-block">
           <p class="quick-label">Candidats</p>

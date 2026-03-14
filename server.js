@@ -29,7 +29,7 @@ const DEFAULT_TABLES = [
   { id: "table-1", name: "Table 1" },
   { id: "table-2", name: "Table 2" }
 ];
-const DEFAULT_REGISTERED_VOTERS = 1153;
+const DEFAULT_REGISTERED_VOTERS = 1152;
 const LEGACY_LIST_NAMES = ["Liste 1", "Liste 2", "Liste lagon", "Liste orange", "Liste corail"];
 
 const MIME_TYPES = {

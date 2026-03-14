@@ -454,7 +454,7 @@ button.danger {
 
 .active-table-control {
   margin: 0;
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.45rem;
   border-radius: 999px;
@@ -474,6 +474,10 @@ button.danger {
   padding: 0 0.55rem;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+body.admin-write-enabled .active-table-control {
+  display: inline-flex;
 }
 
 .undo-inline {

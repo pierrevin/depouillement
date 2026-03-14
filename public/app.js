@@ -769,6 +769,7 @@ function renderSimulationResult() {
 
 function renderAccessControls() {
   const writable = canWrite();
+  document.body.classList.toggle("admin-write-enabled", writable);
   const menuLabel = state.isAdminView ? "Admin actif" : "Menu admin";
   elements.adminMenuButton.textContent = menuLabel;
   elements.adminMenuButton.classList.toggle("active", state.isAdminView);

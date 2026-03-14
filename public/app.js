@@ -1190,10 +1190,15 @@ async function initializeWriteAccess() {
       : state.writeProtectionEnabled
         ? "pin"
         : "none";
-  state.isWriteUnlocked = Boolean(payload.writeAuthorized);
   if (!state.writeProtectionEnabled) {
     currentWritePin = "";
-  } else if (state.authMode !== "pin") {
+    // Sans protection serveur, on démarre volontairement en mode lecteur.
+    state.isWriteUnlocked = false;
+    state.isAdminView = false;
+    return;
+  }
+  state.isWriteUnlocked = Boolean(payload.writeAuthorized);
+  if (state.authMode !== "pin") {
     currentWritePin = "";
   }
   state.isAdminView = state.isWriteUnlocked;

@@ -768,6 +768,7 @@ function renderSimulationResult() {
 }
 
 function renderAccessControls() {
+  const writable = canWrite();
   const menuLabel = state.isAdminView ? "Admin actif" : "Menu admin";
   elements.adminMenuButton.textContent = menuLabel;
   elements.adminMenuButton.classList.toggle("active", state.isAdminView);
@@ -775,8 +776,11 @@ function renderAccessControls() {
   elements.adminOnlySections.forEach((section) => {
     section.hidden = !state.isAdminView;
   });
+  if (elements.activeTableControl) {
+    elements.activeTableControl.hidden = !writable;
+  }
   if (elements.simulationPanel) {
-    elements.simulationPanel.hidden = !canWrite();
+    elements.simulationPanel.hidden = !writable;
   }
 
   const isAccountMode = state.authMode === "account";

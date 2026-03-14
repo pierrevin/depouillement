@@ -472,6 +472,13 @@ button.danger {
   flex-wrap: wrap;
 }
 
+.quick-table-selector {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: -0.2rem;
+  margin-bottom: 0.2rem;
+}
+
 .active-table-chip {
   margin: 0;
   border-radius: 999px;

@@ -54,6 +54,9 @@ const elements = {
   tableSelector: document.getElementById("table-selector"),
   tableSelect1: document.getElementById("table-select-1"),
   tableSelect2: document.getElementById("table-select-2"),
+  quickTableSelector: document.getElementById("quick-table-selector"),
+  quickTableSelect1: document.getElementById("quick-table-select-1"),
+  quickTableSelect2: document.getElementById("quick-table-select-2"),
   selectedTableLabel: document.getElementById("selected-table-label"),
   unlockButton: document.getElementById("unlock-button"),
   lockButton: document.getElementById("lock-button"),
@@ -209,6 +212,15 @@ function persistActiveTableId() {
 
 function getActiveTable() {
   return state.tables.find((table) => table.id === activeTableId) || null;
+}
+
+function setActiveTable(tableId) {
+  if (tableId !== "table-1" && tableId !== "table-2") {
+    return;
+  }
+  activeTableId = tableId;
+  persistActiveTableId();
+  render();
 }
 
 function computeSeatAllocationDetailed(listsInput, totalSeatsInput = DEFAULT_TOTAL_SEATS) {
@@ -961,6 +973,14 @@ function renderTableSelection() {
     elements.tableSelect2.classList.toggle("active", activeTableId === "table-2");
     elements.tableSelect2.textContent = table2?.name || "Table 2";
   }
+  if (elements.quickTableSelect1) {
+    elements.quickTableSelect1.classList.toggle("active", activeTableId === "table-1");
+    elements.quickTableSelect1.textContent = table1?.name || "Table 1";
+  }
+  if (elements.quickTableSelect2) {
+    elements.quickTableSelect2.classList.toggle("active", activeTableId === "table-2");
+    elements.quickTableSelect2.textContent = table2?.name || "Table 2";
+  }
   if (elements.selectedTableLabel) {
     elements.selectedTableLabel.textContent = selected
       ? `Les actions +1 / Annuler de cet appareil s'appliquent à ${selected.name}.`
@@ -1215,17 +1235,25 @@ function setupEvents() {
 
   if (elements.tableSelect1) {
     elements.tableSelect1.addEventListener("click", () => {
-      activeTableId = "table-1";
-      persistActiveTableId();
-      render();
+      setActiveTable("table-1");
     });
   }
 
   if (elements.tableSelect2) {
     elements.tableSelect2.addEventListener("click", () => {
-      activeTableId = "table-2";
-      persistActiveTableId();
-      render();
+      setActiveTable("table-2");
+    });
+  }
+
+  if (elements.quickTableSelect1) {
+    elements.quickTableSelect1.addEventListener("click", () => {
+      setActiveTable("table-1");
+    });
+  }
+
+  if (elements.quickTableSelect2) {
+    elements.quickTableSelect2.addEventListener("click", () => {
+      setActiveTable("table-2");
     });
   }
 

@@ -5,8 +5,9 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 ## Fonctionnalites
 
 - 2 listes configurables (noms modifiables a chaud)
-- Compteurs +1 / -1 pour chaque liste
-- Compteurs +1 / -1 pour les bulletins blancs et nuls
+- 2 tables de depouillement (table-1 / table-2) avec fusion automatique en temps reel
+- Compteurs +1 / -1 pour chaque liste (par table)
+- Compteurs +1 / -1 pour les bulletins blancs et nuls (par table)
 - Actions rapides mobile: +1 par touche pour un depouillement simple et fiable
 - Statistiques instantanees: total bulletins, exprimes, blancs, nuls, pourcentage, tete, ecart
 - Champ "inscrits" avec calcul automatique du taux de participation
@@ -14,7 +15,7 @@ Webapp tres legere pour compter les voix pendant un depouillement avec mise a jo
 - Mode simulation detaille des elus (19 sieges) avec les noms reels des listes
 - Mode partage colistiers: compte admin (ou PIN en mode legacy), lecture seule par defaut
 - Historique recent des actions
-- Annulation de la derniere action
+- Annulation de la derniere action de la table active uniquement
 - Remise a zero globale
 - Synchronisation temps reel entre onglets/appareils via SSE
 - Persistance locale du comptage dans `data/state.json`
@@ -39,14 +40,14 @@ http://localhost:3000
 - `POST /api/access/verify` - verifie un PIN de saisie (uniquement si mode PIN) (`{ "pin": "1234" }`)
 - `POST /api/access/logout` - ferme la session admin en cours
 - `GET /api/events` - flux temps reel (Server-Sent Events)
-- `POST /api/vote` - ajoute/retire une voix (`{ "listId": "liste-1", "delta": 1 }`)
+- `POST /api/vote` - ajoute/retire une voix (`{ "tableId": "table-1", "listId": "liste-1", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
-- `POST /api/special-vote` - ajoute/retire un blanc ou nul (`{ "kind": "blank", "delta": 1 }`)
+- `POST /api/special-vote` - ajoute/retire un blanc ou nul (`{ "tableId": "table-1", "kind": "blank", "delta": 1 }`)
   - `delta` accepte `1`, `-1`
 - `POST /api/config` - renomme les listes et met a jour les inscrits (`{ "names": ["Liste A", "Liste B"], "registeredVoters": 1200 }`)
-- `POST /api/set-totals` - saisie manuelle des totaux (`{ "listVotes": [100, 90], "blankVotes": 5, "nullVotes": 2 }`)
+- `POST /api/set-totals` - saisie manuelle des totaux fusionnes (`{ "listVotes": [100, 90], "blankVotes": 5, "nullVotes": 2 }`)
 - `POST /api/reset` - remet les compteurs a zero
-- `POST /api/undo` - annule la derniere action
+- `POST /api/undo` - annule la derniere action de la table (`{ "tableId": "table-1" }`)
 
 ## Partage lecture seule / saisie
 

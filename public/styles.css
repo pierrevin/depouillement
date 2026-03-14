@@ -283,6 +283,26 @@ body.admin-drawer-open {
   align-items: end;
 }
 
+.table-selector {
+  margin-top: 0.8rem;
+  border-top: 1px dashed #c6d9e1;
+  padding-top: 0.65rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.table-selector-buttons {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.table-selector-buttons button.active {
+  background: #dcefe9;
+  color: #0f5c46;
+  border: 1px solid #9ccfbe;
+}
+
 .access-pin-label {
   margin: 0;
 }
@@ -449,6 +469,16 @@ button.danger {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.active-table-chip {
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid #c5d8e0;
+  background: #f3f9fb;
+  color: #245e77;
+  padding: 0.22rem 0.56rem;
 }
 
 .undo-inline {
@@ -604,6 +634,11 @@ button.danger {
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
+}
+
+.quick-subcount {
+  font-size: 0.75rem;
+  opacity: 0.9;
 }
 
 .quick-percent {
@@ -766,6 +801,28 @@ button.danger {
   border-radius: var(--radius-md);
   background: #f7fbfc;
   padding: 0.7rem;
+}
+
+.tables-breakdown {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.table-mini-card {
+  display: grid;
+  gap: 0.16rem;
+  border: 1px solid #d7e4ea;
+  border-radius: 11px;
+  background: #f8fcfd;
+  padding: 0.5rem 0.58rem;
+  color: #2c5f78;
+  font-size: 0.79rem;
+}
+
+.table-mini-card.active {
+  border-color: #a7c6d3;
+  background: #edf7fb;
 }
 
 .stats {
@@ -1050,6 +1107,10 @@ button.compact-reset.armed {
   }
 
   .access-form {
+    grid-template-columns: 1fr;
+  }
+
+  .table-selector-buttons {
     grid-template-columns: 1fr;
   }
 

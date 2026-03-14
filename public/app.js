@@ -1076,7 +1076,7 @@ function render() {
   renderAccessControls();
   renderManualTotals();
   elements.undoButton.disabled = !writable || !hasUndoableActionForActiveTable();
-  elements.undoButton.textContent = `Annuler (${getActiveTable()?.name || "table active"})`;
+  elements.undoButton.textContent = "Annuler dernière action";
   const canReset = state.totalBallots > 0;
   elements.resetButton.disabled = !writable || !canReset;
   if (!canReset) {
